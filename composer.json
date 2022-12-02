@@ -1,0 +1,19 @@
+{
+    "name": "the/php",
+    "description": "php dependcies for The framework",
+    "type": "library",
+    "license": "Apache-2.0 license",
+    "autoload": {
+        "psr-4": {
+            "The\\Php\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Puneet Sharma",
+            "email": "puneetsharma9@hotmail.com"
+        }
+    ],
+    "minimum-stability": "RC",
+    "require": {}
+}
