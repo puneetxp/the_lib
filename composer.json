@@ -15,5 +15,7 @@
         }
     ],
     "minimum-stability": "RC",
-    "require": {}
+    "require": {
+        "php": ">=8.0"
+    }
 }
