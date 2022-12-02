@@ -2,8 +2,7 @@
 
 namespace The;
 
-use App\The\Model\{
-    Session,
+use App\Model\{
     User
 };
 
