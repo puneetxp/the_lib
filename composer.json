@@ -1,11 +1,11 @@
 {
-    "name": "the/php",
+    "name": "tthe/php",
     "description": "php dependcies for The framework",
     "type": "library",
     "license": "Apache-2.0 license",
     "autoload": {
         "psr-4": {
-            "The\\Php\\": "src/"
+            "TThe\\Php\\": "src/"
         }
     },
     "authors": [
