@@ -1,11 +1,11 @@
 {
-    "name": "tthe/php",
+    "name": "puneetxp/the",
     "description": "php dependcies for The framework",
     "type": "library",
     "license": "Apache-2.0",
     "autoload": {
         "psr-4": {
-            "TThe\\Php\\": "src/"
+            "The\\": "src/"
         }
     },
     "authors": [

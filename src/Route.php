@@ -1,6 +1,6 @@
 <?php
 
-namespace App\TheDep;
+namespace The;
 
 /**
  * Routing Module of TPHP 
