@@ -27,17 +27,17 @@ class Auth
                     'cookie_lifetime' => 1440,
                     'cookie_secure' => secure,
                     "cookie_path" => '/',
-                    'cookie_domain' => web,
+                    'cookie_domain' => sslhost,
                     'cookie_httponly' => httponly,
-                    'cookie_samesite' => same_site
+                    'cookie_samesite' => samesite
                 ]) :
                 session_start([
                     'cookie_lifetime' => 0,
                     'cookie_secure' => secure,
                     "cookie_path" => '/',
-                    'cookie_domain' => web,
+                    'cookie_domain' => sslhost,
                     'cookie_httponly' => httponly,
-                    'cookie_samesite' => same_site
+                    'cookie_samesite' => samesite
                 ]);
             $_SESSION['user_id'] = $auth['id'];
             $auth['roles'] = Sessions::roles();
@@ -56,7 +56,7 @@ class Auth
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
-            $auth = User::create($user)->array();
+            $auth = User::create([$user])->array();
             if (is_array($auth)) {
                 session_destroy();
                 (Req::one('remember_me')) ?
@@ -64,17 +64,17 @@ class Auth
                         'cookie_lifetime' => 1440,
                         'cookie_secure' => secure,
                         "cookie_path" => '/',
-                        'cookie_domain' => web,
+                        'cookie_domain' => sslhost,
                         'cookie_httponly' => httponly,
-                        'cookie_samesite' => same_site
+                        'cookie_samesite' => samesite
                     ]) :
                     session_start([
                         'cookie_lifetime' => 0,
                         'cookie_secure' => secure,
                         "cookie_path" => '/',
-                        'cookie_domain' => web,
+                        'cookie_domain' => sslhost,
                         'cookie_httponly' => httponly,
-                        'cookie_samesite' => same_site
+                        'cookie_samesite' => samesite
                     ]);
                 $_SESSION['user_id'] = $auth['id'];
                 $auth['roles'] = Sessions::roles();

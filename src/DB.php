@@ -2,168 +2,135 @@
 
 namespace The;
 
-class DB extends \mysqli {
+use mysqli_result;
 
-// single instance of self shared among all instances
-    private static $instance = null;
-
-// db connection config vars
-//This method must be static, and must return an instance of the object if the object
-//does not already exist.
-    public static function getInstance() {
-        if (!self::$instance instanceof self) {
-            self::$instance = new self;
-        }
-        return self::$instance;
-    }
-
-// The clone and wakeup methods prevents external instantiation of copies of the Singleton class,
-// thus eliminating the possibility of duplicate objects.
-    public function __clone() {
-        trigger_error('Clone is not allowed.', E_USER_ERROR);
-    }
-
-    public function __wakeup() {
-        trigger_error('Deserializing is not allowed.', E_USER_ERROR);
-    }
-
-    private $result;
-    private $_sanitized_data;
-
-    private function __construct(
-            private $_table = '',
-            private $_fillable = [],
-            private $_table_id = '',
-            private $_table_key = '',
-            private $_table_col = '*',
-            private $_user = DBUSER,
-            private $_pass = DBPWD,
-            private $_dbName = DBNAME,
-            private $_dbHost = DBHOST,
+class DB extends \mysqli
+{
+    public mysqli_result|bool $result;
+    private $query;
+    private $placeholder = [];
+    public function __construct(
+        private $table,
+        protected $col = ["*"]
     ) {
         parent::__construct();
         parent::options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
-        parent::real_connect($this->_dbHost, $this->_user, $this->_pass, $this->_dbName);
+        parent::real_connect(dbhost, dbuser, dbpwd, dbname);
         if (mysqli_connect_error()) {
             exit('Connect Error (' . mysqli_connect_errno() . ') '
-                    . mysqli_connect_error());
+                . mysqli_connect_error());
         }
     }
-
-    //intialize from model
-    public static function inti($table, $fillable, $id, $key, $col = ['*']) {
-        return new self($table, $fillable, $id, $key, implode(',', $col));
-    }
-
-    public static function __callStatic($method, $parameters) {
-        return (new static)->$method(...$parameters);
-    }
-
-    //get data
-    //mutiple
-    //all
-    public function all() {
-        $this->result = $this->query("SELECT $this->_table_col FROM $this->_table");
+    public function where($where = [])
+    {
+        $this->SelSet()->WhereQ($where);
         return $this;
     }
 
-    //return many
-    public function many() {
-        if ($this->result->num_rows) {
-            return $this->result->fetch_all(MYSQLI_ASSOC);
+    public function find($value, $key)
+    {
+        $where = [];
+        if (is_array($value)) {
+            $where[$key] = $value;
         } else {
-            return [];
+            $where[$key] = [$value];
         }
+        return $this->SelSet()->WhereQ($where)->LimitQ(1)->exe();
     }
 
-    //single return
-    public function one() {
-        if ($this->result->num_rows) {
-            return $this->result->fetch_assoc();
-        } else {
-            return null;
-        }
+    public function create($data)
+    {
+        return $this->InSet()->InsertQ($data)->exe();
     }
-
-    public function find() {
-        $this->result = $this->query("SELECT $this->_table_col FROM $this->_table WHERE $this->_table_key = '$this->_table_id' LIMIT 1");
-        return $this->one();
+    public function update($where)
+    {
+        return $this->SelSet()->WhereQ($where)->exe();
     }
-
-    public function where() {
-        if (is_array($this->_table_id)) {
-            $mysql_id = implode("','", $this->_table_id);
-        } else {
-            $mysql_id = $this->_table_id;
-        }
-        $this->result = $this->query("SELECT " . $this->_table_col . " FROM $this->_table WHERE $this->_table_key IN ('$mysql_id') ");
+    public function delete($where)
+    {
+        return $this->DelSet()->WhereQ($where)->exe();
+    }
+    public function upsert($data)
+    {
+        return $this->InSet()->UpsertQ($data)->exe();
+    }
+    public function exe()
+    {
+        $smt = $this->prepare($this->query);
+        $smt->execute($this->placeholder);
+        $this->result = $smt->get_result();
+        // $this->result = $this->execute_query($this->query, $this->placeholder);
         return $this;
     }
-
-    //reale_escape_string
-    public function array_sanized($data) {
-        if ($data == '') {
-            $data = $_POST;
-        }
-        $data_fillable = array_intersect_key($data, array_flip($this->_fillable));
-        foreach ($data_fillable as $key => $value) {
-            $data_fillable[$key] = $this->real_escape_string(addcslashes($value, '%_'));
-        }
-        $this->_sanitized_data = $data_fillable;
+    public function UpsertQ($data)
+    {
+        $this->InsertQ($data);
+        $this->query .= " on duplicate key update " . implode(",", array_map(function ($key) {
+            return "`$key`=values(`$key`)";
+        }, array_keys($data[0])));
+        return $this;
     }
+    public function InsertQ($data)
+    {
+        if (count($data) > 0) {
+            $this->query .= "( " . implode(",", array_keys($data[0])) . " ) VALUES " . implode(",", array_map(function ($row) {
 
-    //create
-    public function create($data) {
-        $this->array_sanized($data);
-        $key_sql = array_keys($this->_sanitized_data);
-        $value_sql = array_values($this->_sanitized_data);
-        if ($this->query("INSERT INTO $this->_table (`" . implode("`,`", $key_sql) . "`) VALUES" . "('" . implode("','", $value_sql) . "')")) {
-            $this->_table_key = 'id';
-            $this->_table_id = $this->insert_id;
-            return $this->find();
-        } else {
-            $this->error;
+                $this->placeholder = [...$this->placeholder, ...array_values($row)];
+                return "(" . implode(",", array_map(function ($col) {
+                    return "?";
+                }, $row)) . ")";
+            }, $data));
         }
+        return $this;
     }
-
-    //create mulitple batch
-    public function upsert($data) {
-        $this->array_sanized($data);
-        $key_sql = array_keys($this->_sanitized_data);
-        $value_sql = array_values($this->_sanitized_data);
-        if ($this->query("REPLACE INTO $this->_table (`" .
-                        implode("`,`", $key_sql) .
-                        "`) VALUES" . "('" . implode("','", $value_sql) . "')")) {
-            $this->_table_key = 'id';
-            $this->_table_id = $key_sql;
-            return $this->where();
-        } else {
-            $this->error;
-        }
+    public function UpdateQ($data)
+    {
+        $this->query = "UPDATE $this->table SET " . implode(" , ", array_map(function ($key, $value) {
+            $this->placeholder = [...$this->placeholder, $value];
+            return "$key = (" . implode(",", array_map(function ($x) {
+                return "?";
+            }, $value)) . ")";
+        }, array_keys($data), array_values($data)));
+        return $this;
     }
-
-    //update
-    public function update($data) {
-        $this->array_sanized($data);
-        $r = [];
-        foreach ($this->_sanitized_data as $key => $value) {
-            array_push($r, '`' . $key . "`='" . $value . "'");
-        }
-        if ($this->query("UPDATE `$this->_table` SET " . implode(",", $r) . "  WHERE `$this->_table_key` = '$this->_table_id';")) {
-            return $this->find();
-        } else {
-            $this->error;
-        }
+    public function SelectQ()
+    {
+        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
+        return $this;
     }
-
-    //delete
-    public function delete($id, $key = 'id') {
-        if ($this->query("DELETE FROM $this->_table WHERE $key IN ('" . implode(',', $id) . "')")) {
-            return $id;
-        } else {
-            $this->error;
-        }
+    public function WhereQ($where)
+    {
+        $this->query .= " WHERE " .  implode(" AND ", array_map(function ($key, $value) {
+            $this->placeholder = [...$this->placeholder, ...$value];
+            return " `$key` IN (" . implode(",", array_map(function () {
+                return "?";
+            }, $value)) . ")";
+        }, array_keys($where), array_values($where)));
+        return $this;
     }
-
-
+    public function SelSet()
+    {
+        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
+        return $this;
+    }
+    public function InSet()
+    {
+        $this->query = "INSERT INTO $this->table";
+        return $this;
+    }
+    public function UpSet()
+    {
+        $this->query = "UPDATE $this->table SET ";
+        return $this;
+    }
+    public function DelSet()
+    {
+        $this->query = "DELETE FROM $this->table ";
+        return $this;
+    }
+    public function  LimitQ(int $limit)
+    {
+        $this->query .= " LIMIT " . $limit;
+        return $this;
+    }
 }

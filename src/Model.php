@@ -7,19 +7,12 @@ abstract class Model {
     //items
     protected $items = [];
     protected $singular = false;
-
+    protected $col = ["*"];
+    protected DB $db;
     //__construct
     public function __construct(
-            protected $id = '',
-            protected $key = 'id',
-            protected $col = ['*']
     ) {
-        
-    }
-
-    //DB_connect
-    public function connect() {
-        return DB::inti($this->table, $this->fillable, $this->id, $this->key, $this->col);
+        $this->db = new DB($this->table);
     }
 
     public function set_singular() {
@@ -35,41 +28,31 @@ abstract class Model {
     //GET_data
     //mulitple
     public static function all() {
-        return (new static('*'))->get_items();
-    }
-
-    public function get_items() {
-        $this->items = $this->connect()->all()->many();
-        return $this;
+        return (new static('*'))->_where();
     }
 
     //where *
-    public static function where($id, $key = "id", $col = ['*']) {
-        return (new static(id: $id, key: $key, col: $col))->_where();
+    public static function where($where) {
+        return (new static())->_where($where);
     }
 
     public function _where() {
-        $this->items = $this->connect()->where($this->col)->many();
+        $this->db->where();
         return $this;
     }
 
     //single
-    public static function find($id, $key = 'id', $col = ['*']) {
-        return (new static(id: $id, key: $key, col: $col))->set_singular()->get_item();
-    }
-
-    public function get_item() {
-        $this->items = $this->connect()->find();
-        if ($this->items == null) {
-            return null;
-        } else {
-            return $this;
-        }
+    public static function find($value, $key = 'id') {
+        $x = (new static());
+        $x->db->find($value,$key);
+        $x->items =(array)$x->db->result->fetch_object();
+        return $x;
     }
 
     //insert
-    public function insert($data = '') {
-        $this->items = $this->connect()->create($data);
+    public function insert($data) {
+        $x = (new static());
+        $x->db->create($data);
         return $this;
     }
 
@@ -79,7 +62,7 @@ abstract class Model {
 
     //update
     public static function update($id, $key = 'id', $data = '') {
-        return (new static(id: $id, key: $key, col: ["*"]))->_update($data);
+        return (new static())->_update($data);
     }
 
     public static function upsert($data) {
@@ -87,26 +70,23 @@ abstract class Model {
     }
 
     public function _update($data) {
-        $this->items = $this->connect()->update($data);
+        $this->items = $this->db->update($data);
         return $this;
     }
 
     public function _upsert($data) {
-        $this->items = $this->connect()->upsert($data);
+        $this->items = $this->db->upsert($data);
         return $this;
     }
 
     //delete
-    public static function delete($id, $key = 'id') {
-        return (new static($id, $key))->_where()?->_destroy();
+    public static function delete($where) {
+        return (new static())->db->delete($where)->result->fetch_assoc();
     }
 
-    public function _destroy() {
-        $array_col = array_column($this->items, $this->key);
-        $this->items = $this->connect()->delete($array_col, $this->key);
-        return $this;
+    public function clean($data){
+        return array_map(fn($item) =>array_filter($item,fn($key)=>in_array($key,$this->fillable)), $data);
     }
-
     //default output
     public function __toString() {
         return Response::json($this->items);
@@ -182,9 +162,11 @@ abstract class Model {
     }
 
     public function relation($data) {
+        $where = [];
+        $where[$this->relations[$data]['key']] = ($this->singular ? $this->items[$this->relations[$data]['name']] : array_column($this->items, $this->relations[$data]['name']));
         return call_user_func_array(
                 [$this->relations[$data]['callback'], 'where'],
-                [($this->singular ? $this->items[$this->relations[$data]['name']] : array_column($this->items, $this->relations[$data]['name'])), $this->relations[$data]['key']]
+                [$where]
         );
     }
 
