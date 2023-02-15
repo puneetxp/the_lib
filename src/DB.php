@@ -21,7 +21,7 @@ class DB extends \mysqli
                 . mysqli_connect_error());
         }
     }
-    public function where($where = [])
+    public function where($where)
     {
         $this->SelSet()->WhereQ($where);
         return $this;
@@ -61,6 +61,14 @@ class DB extends \mysqli
         $this->result = $smt->get_result();
         // $this->result = $this->execute_query($this->query, $this->placeholder);
         return $this;
+    }
+    public function many()
+    {
+        return $this->result->fetch_all(MYSQLI_ASSOC);
+    }
+    public function first()
+    {
+        return $this->result->fetch_assoc();
     }
     public function UpsertQ($data)
     {
