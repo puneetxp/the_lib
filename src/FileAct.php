@@ -70,7 +70,7 @@ class FileAct {
       return $this;
    }
 
-   function reArrayFiles(&$file_post) {
+   public function reArrayFiles(&$file_post) {
       $file_ary = array();
       $file_count = count($file_post['name']);
       $file_keys = array_keys($file_post);
