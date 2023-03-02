@@ -34,8 +34,7 @@ abstract class Model
     {
         $x = (new static());
         $x->db->SelSet();
-        $x->db->exe();
-        $x->items = (array)$x->db->many();
+        $x->get();
         return $x;
     }
 
@@ -43,14 +42,27 @@ abstract class Model
     public static function where($where)
     {
         $x = (new static())->_where($where);
-        $x->db->exe();
-        $x->items = (array)$x->db->many();
         return $x;
     }
-
     public function _where($where = [])
     {
         $this->db->where($where);
+        return $this;
+    }
+    public static function wherec($where)
+    {
+        $x = (new static())->_wherec($where);
+        return $x;
+    }
+    public function _wherec($where = [])
+    {
+        $this->db->WhereCustomQ($where);
+        return $this;
+    }
+    public function get()
+    {
+        $this->db->exe();
+        $this->items = (array)$this->db->many();
         return $this;
     }
 

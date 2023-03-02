@@ -116,6 +116,14 @@ class DB extends \mysqli
         }, array_keys($where), array_values($where)));
         return $this;
     }
+    public function WhereCustomQ($where)
+    {
+        $this->query .= " WHERE " .  implode(" AND ", array_map(function ($value) {
+            $this->placeholder = [...$this->placeholder, $value[2]];
+            return " `$value[0]` $value[1] ?";
+        }, array_keys($where), array_values($where)));
+        return $this;
+    }
     public function SelSet()
     {
         $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
