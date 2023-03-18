@@ -9,6 +9,7 @@ class DB extends \mysqli
     public mysqli_result|bool $result;
     private $query;
     private $placeholder = [];
+    public $rows;
     public function __construct(
         private $table,
         protected $col = ["*"]
@@ -52,13 +53,15 @@ class DB extends \mysqli
     }
     public function upsert($data)
     {
-        return $this->InSet()->UpsertQ($data)->exe();
+        $this->InSet()->UpsertQ($data)->exe();
+        return $this;
     }
     public function exe()
     {
         $smt = $this->prepare($this->query);
         $smt->execute($this->placeholder);
         $this->result = $smt->get_result();
+        $this->rows = $this->affected_rows;
         // $this->result = $this->execute_query($this->query, $this->placeholder);
         return $this;
     }
@@ -70,12 +73,25 @@ class DB extends \mysqli
     {
         return $this->result->fetch_assoc();
     }
+    public function lastInserted()
+    {
+        return $this->SelectQ()->where(['id' => [$this->insert_id]])->exe();
+    }
+    public function getInserted()
+    {
+        return $this->SelectQ()->WhereCustomQ([['id', "<", [$this->insert_id]]])->rawsql(" ORDER BY id DESC LIMIT $this->rows");
+    }
     public function UpsertQ($data)
     {
         $this->InsertQ($data);
         $this->query .= " on duplicate key update " . implode(",", array_map(function ($key) {
             return "`$key`=values(`$key`)";
         }, array_keys($data[0])));
+        return $this;
+    }
+    public function rawsql($sql)
+    {
+        $this->query .= $sql;
         return $this;
     }
     public function InsertQ($data)
@@ -103,7 +119,8 @@ class DB extends \mysqli
     }
     public function SelectQ()
     {
-        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
+        $this->placeholder = [];
+        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table ";
         return $this;
     }
     public function WhereQ($where)
@@ -119,9 +136,9 @@ class DB extends \mysqli
     public function WhereCustomQ($where)
     {
         $this->query .= " WHERE " .  implode(" AND ", array_map(function ($value) {
-            $this->placeholder = [...$this->placeholder, $value[2]];
+            $this->placeholder = [...$this->placeholder, ...$value[2]];
             return " `$value[0]` $value[1] ?";
-        }, array_keys($where), array_values($where)));
+        }, array_values($where)));
         return $this;
     }
     public function SelSet()

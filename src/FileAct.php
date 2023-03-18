@@ -7,24 +7,36 @@ namespace The;
  *
  * @author puneetxp
  */
-class FileAct {
+class FileAct
+{
 
+   protected string $public;
    public function __construct(
-           protected $file,
-           protected $dir
+      protected $file,
+      protected string $dir,
    ) {
-      
    }
 
-   public static function init($file, $dir = "public") {
-      $dir = "../storage/" . $dir;
-      if (!is_dir($dir)) {
-         mkdir($dir, 0755, true);
+   public $files = [];
+   public function public(string $public)
+   {
+      $this->public =  $public;
+      $this->dir .= "/public" . "/" . $this->public;
+      return $this;
+   }
+   public function checkdir()
+   {
+      if (!is_dir($this->dir)) {
+         mkdir($this->dir, 775, true);
       }
-      return new self(file: $file, dir: $dir);
+   }
+   public static function  init($file, $prefix = "../storage")
+   {
+      return new self(file: $file, dir: $prefix);
    }
 
-   public function webpImage($source, $quality = 100, $removeOld = false) {
+   public function webpImage($source, $quality = 100, $removeOld = false)
+   {
       $dir = pathinfo($source, PATHINFO_DIRNAME);
       $name = pathinfo($source, PATHINFO_FILENAME);
       $destination = $dir . DIRECTORY_SEPARATOR . $name . '.webp';
@@ -50,27 +62,34 @@ class FileAct {
       return $destination;
    }
 
-   public function up($name = '') {
+   public function up($name = '')
+   {
+      $this->checkdir();
       if ($name == '') {
          $target_file = $this->dir . basename($_FILES[$this->file]["name"]);
       } else {
          $target_file = $this->dir . $name . pathinfo($_FILES[$this->file]['name'], PATHINFO_EXTENSION);
       }
       if (move_uploaded_file($_FILES[$this->file]["tmp_name"], $target_file)) {
+         $this->files[] = $target_file;
          return $this;
       } else {
          return false;
       }
    }
 
-   public function ups() {
-      foreach ($this->reArrayFiles($_FILES[$this->file]) as $file) {
-         move_uploaded_file($file['tmp_name'], $this->dir);
+   public function ups()
+   {
+      $this->checkdir();
+      foreach ($this->reArrayFiles($this->file) as $file) {
+         $this->files[] = ['name' => $file['name'], 'dir' => $this->dir . "/" . $file["name"], 'public' => $this->public . "/" . $file["name"]];
+         move_uploaded_file($file['tmp_name'], $this->dir . "/" . $file['name']);
       }
       return $this;
    }
 
-   public function reArrayFiles(&$file_post) {
+   public function reArrayFiles(&$file_post)
+   {
       $file_ary = array();
       $file_count = count($file_post['name']);
       $file_keys = array_keys($file_post);
@@ -82,8 +101,8 @@ class FileAct {
       return $file_ary;
    }
 
-   public static function delete($path) {
+   public static function delete($path)
+   {
       unlink($path);
    }
-
 }

@@ -58,7 +58,7 @@ class RouteCompile
     }
     public function crud_compile($curd, $prefix)
     {
-        if (in_array("all", $curd["crud"])) {
+        if (in_array("a", $curd["crud"])) {
             $this->addroute(["handler" => [$curd["class"], "all"], ...$prefix], "GET");
         }
         if (in_array("r",  $curd["crud"])) {
@@ -77,14 +77,9 @@ class RouteCompile
             $this->addroute(["handler" => [$curd["class"], "update"], ...$x], "PATCH");
         }
 
-        if (in_array("upsert",  $curd["crud"])) {
+        if (in_array("p",  $curd["crud"])) {
             $this->addroute(["handler" => [$curd["class"], "upsert"], ...$prefix], "PUT");
         }
-
-        if (in_array("where",  $curd["crud"])) {
-            $this->addroute(["handler" => [$curd["class"], "where"], ...$prefix], "WHERE");
-        }
-
         if (in_array("d",  $curd["crud"])) {
             $x = $prefix;
             $x["path"] .= "/.+";
