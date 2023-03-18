@@ -4,7 +4,6 @@ namespace The;
 
 abstract class Model
 {
-
     //items
     protected $items = [];
     protected $singular = false;
@@ -41,28 +40,26 @@ abstract class Model
     //where *
     public static function where($where)
     {
-        $x = (new static())->_where($where);
-        return $x;
-    }
-    public function _where($where = [])
-    {
-        $this->db->where($where);
-        return $this;
+        return (new static())->_where($where);
     }
     public static function wherec($where)
     {
-        $x = (new static())->_wherec($where);
-        return $x;
+        return (new static())->_wherec($where);
+    }
+    public function get()
+    {
+        $this->db = $this->db->exe();
+        $this->items = (array)$this->db->many();
+        return $this;
     }
     public function _wherec($where = [])
     {
         $this->db->WhereCustomQ($where);
         return $this;
     }
-    public function get()
+    public function _where($where = [])
     {
-        $this->db->exe();
-        $this->items = (array)$this->db->many();
+        $this->db->where($where);
         return $this;
     }
 
@@ -72,21 +69,37 @@ abstract class Model
         $x = (new static());
         $x->db->find($value, $key);
         $x->items = (array)$x->db->first();
-        $x->singular = true;
-        return $x;
+        if (count($x->items) > 0) {
+            $x->singular = true;
+            return $x;
+        }
+        return null;
     }
 
     //insert
     public function insert($data)
     {
-        $x = (new static());
-        $x->db->create($data);
+        $this->db->create($data);
         return $this;
     }
 
+    public function getInserted()
+    {
+        $this->db->lastInserted();
+        $this->items = (array)$this->db->first();
+        $this->singular = true;
+        return $this;
+    }
+    public function getsInserted()
+    {
+        $this->db->getInserted();
+        $this->get();
+        return $this;
+    }
     public static function create($data = '')
     {
-        return (new static())->insert($data);
+        $x = (new static())->insert($data);
+        return $x;
     }
 
     //update
@@ -108,7 +121,7 @@ abstract class Model
 
     public function _upsert($data)
     {
-        $this->items = $this->db->upsert($data);
+        $this->db->upsert($data);
         return $this;
     }
 
@@ -142,14 +155,14 @@ abstract class Model
         if (is_array($data)) {
             foreach ($data as $item) {
                 if (is_array($item)) {
-                    $x = array_merge($this->relation(array_keys($item)[0])
-                        ?->wfast(array_values($item)[0])->array(), $x);
+                    $x = array_merge($this->isnull($this->relation(array_keys($item)[0])
+                        ?->wfast(array_values($item)[0])), $x);
                 } else {
-                    $x[$item] = $this->relation($item)->array();
+                    $x[$item] = $this->isnull($this->relation($item));
                 }
             }
         } else {
-            $x[$data] = $this->relation($data)->array();
+            $x[$data] = $this->isnull($this->relation($data));
         }
         $x[$this->name] = $this->items;
         $this->items = $x;
@@ -158,7 +171,13 @@ abstract class Model
         }
         return $this;
     }
-
+    public function isnull($x)
+    {
+        if ($x == null) {
+            return [];
+        }
+        return $x->array();
+    }
     //load with relationship with some filltering
     public function with($data)
     {
@@ -202,13 +221,15 @@ abstract class Model
     public function relation($data)
     {
         $where = [];
-        $x = ($this->singular ? [$this->items[$this->relations[$data]['name']]] : array_column($this->items, $this->relations[$data]['name']));
+        $x = ($this->singular ?
+            [$this->items[$this->relations[$data]['name']]] :
+            array_column($this->items, $this->relations[$data]['name']));
         if (count($x) > 0) {
             $where[$this->relations[$data]['key']] = $x;
             return call_user_func_array(
                 [$this->relations[$data]['callback'], 'where'],
                 [$where]
-            );
+            )->get();
         }
         return null;
     }

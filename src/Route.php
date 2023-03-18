@@ -26,10 +26,10 @@ class Route
             'cookie_httponly' => httponly,
             'cookie_samesite' => samesite
         ]);
-        $timezone = date_default_timezone_set("Asia/Kolkata");
-        if (json_decode(file_get_contents('php://input'), true)) {
-            $_POST = json_decode(file_get_contents('php://input'), true);
-        }
+        date_default_timezone_set("Asia/Kolkata");
+        // if (json_decode(file_get_contents('php://input'), true)) {
+        //     $_POST = json_decode(file_get_contents('php://input'), true);
+        // }
         $this->active_route_set();
         $this->run_route($routes);
     }
@@ -40,6 +40,9 @@ class Route
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
         $this->_realUri = explode('/', $this->_uri);
         $this->_roles = Sessions::roles();
+        if (isset($_POST['_method'])) {
+            $this->_method = $_POST['_method'];
+        }
     }
 
     public function run_route($routes)
