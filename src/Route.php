@@ -58,14 +58,18 @@ class Route
 
     public function check_permission()
     {
-        if (isset($this->_match_route['roles'])) {
-            if (array_intersect($this->_match_route['roles'], $this->_roles)) {
-            } else {
-                echo Response::not_authorised();
-                return null;
+        if (isset($_SESSION['user_id'])) {
+            if (isset($this->_match_route['roles'])) {
+                if (array_intersect($this->_match_route['roles'], $this->_roles)) {
+                } else {
+                    echo Response::not_authorised();
+                    return null;
+                }
             }
+            return $this;
         }
-        return $this;
+        echo Response::NotLogin();
+        return null;
     }
 
     public function run()

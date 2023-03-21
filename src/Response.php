@@ -23,7 +23,7 @@ class Response
         return json_encode($data);
     }
 
-    public static function not_authorised($data = '')
+    public static function not_authorised($data = 'You Are Not Authorised')
     {
 
         http_response_code(403);
@@ -43,7 +43,11 @@ class Response
         http_response_code(400);
         return json_encode($data);
     }
-
+    public static function NotLogin($data = "You Are Not Login")
+    {
+        http_response_code(401);
+        return json_encode($data);
+    }
     public static function why($data = ["erro" => "your should not be here"])
     {
 
