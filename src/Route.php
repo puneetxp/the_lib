@@ -50,6 +50,9 @@ class Route
         foreach ($routes[$this->_method] as $value) {
             if (preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
+                if(count($this->_roles) == 0){
+                    return $this->run();
+                }
                 return $this->check_permission()?->run();
             }
         }
