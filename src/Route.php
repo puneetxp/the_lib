@@ -41,7 +41,7 @@ class Route
         $this->_realUri = explode('/', $this->_uri);
         $this->_roles = Sessions::roles();
         if (isset($_POST['_method'])) {
-            $this->_method = $_POST['_method'];
+            $this->_method = strtoupper($_POST['_method']);
         }
     }
 
