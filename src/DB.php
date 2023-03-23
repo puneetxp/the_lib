@@ -136,7 +136,7 @@ class DB extends \mysqli
     public function WhereCustomQ($where)
     {
         $this->query .= " WHERE " .  implode(" AND ", array_map(function ($value) {
-            $this->placeholder = [...$this->placeholder, ...$value[2]];
+            $this->placeholder = [...$this->placeholder, $value[2]];
             return " `$value[0]` $value[1] ?";
         }, array_values($where)));
         return $this;
