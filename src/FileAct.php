@@ -27,7 +27,8 @@ class FileAct
    public function checkdir()
    {
       if (!is_dir($this->dir)) {
-         mkdir($this->dir, 775, true);
+         mkdir($this->dir);
+         // mkdir($this->dir, 775, true);
       }
    }
    public static function  init($file, $prefix = "../storage")
