@@ -54,7 +54,7 @@ abstract class Model
     }
     public function _wherec($where = [])
     {
-        $this->db->WhereCustomQ($where);
+        $this->db->SelSet()->WhereCustomQ($where);
         return $this;
     }
     public function _where($where = [])
