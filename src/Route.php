@@ -50,10 +50,10 @@ class Route
         foreach ($routes[$this->_method] as $value) {
             if (preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
-                if(count($this->_roles) == 0){
-                    return $this->run();
+                if (isset($this->_match_route['roles'])) {
+                    return $this->check_permission()?->run();
                 }
-                return $this->check_permission()?->run();
+                return $this->run();
             }
         }
         Response::not_found("Not Found");
@@ -61,15 +61,13 @@ class Route
 
     public function check_permission()
     {
-        if (isset($_SESSION['user_id'])) {
-            if (isset($this->_match_route['roles'])) {
+        if (isset($this->_match_route['roles'])) {
+            if (session_status() === PHP_SESSION_ACTIVE) {
                 if (array_intersect($this->_match_route['roles'], $this->_roles)) {
-                } else {
-                    echo Response::not_authorised();
-                    return null;
+                    return $this;
                 }
+                echo Response::not_authorised();
             }
-            return $this;
         }
         echo Response::NotLogin();
         return null;
