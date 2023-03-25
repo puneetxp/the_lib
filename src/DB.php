@@ -43,9 +43,9 @@ class DB extends \mysqli
     {
         return $this->InSet()->InsertQ($data)->exe();
     }
-    public function update($where)
+    public function update($data)
     {
-        return $this->SelSet()->WhereQ($where)->exe();
+        return $this->UpdateQ($data)->exe();
     }
     public function delete($where)
     {
