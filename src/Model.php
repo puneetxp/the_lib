@@ -103,19 +103,14 @@ abstract class Model
     }
 
     //update
-    public static function update($data)
-    {
-        return (new static())->_update($data);
-    }
-
     public static function upsert($data)
     {
         return (new static())->_upsert($data);
     }
 
-    public function _update($data)
+    public function update($data)
     {
-        $this->items = $this->db->update($data);
+        $this->db->update($data);
         return $this;
     }
 
