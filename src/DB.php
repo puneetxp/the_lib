@@ -10,6 +10,12 @@ class DB extends \mysqli
     private $query;
     private $placeholder = [];
     public $rows;
+    protected $limit = null;
+    protected $enable = null;
+    protected array $where = [
+        "AND" => [],
+        "OR" => []
+    ];
     public function __construct(
         private $table,
         protected $col = ["*"]
@@ -28,28 +34,26 @@ class DB extends \mysqli
         return $this;
     }
 
-    public function find($value, $key)
+    public function find($value, $key = "id")
     {
-        $where = [];
-        if (is_array($value)) {
-            $where[$key] = $value;
-        } else {
-            $where[$key] = [$value];
-        }
-        return $this->SelSet()->WhereQ($where)->LimitQ(1)->exe();
+        return $this->SelSet()->findQ($value, $key)->LimitQ(1);
     }
 
     public function create($data)
     {
-        return $this->InSet()->InsertQ($data)->exe();
+        return $this->InSet()->CreateQ($data)->exe();
     }
     public function update($data)
     {
         return $this->UpdateQ($data)->exe();
     }
-    public function delete($where)
+    public function insert($data)
     {
-        return $this->DelSet()->WhereQ($where)->exe();
+        return $this->InSet()->InsertQ($data)->exe();
+    }
+    public function delete($where = [])
+    {
+        return $this->DelSet()->WhereQ($where);
     }
     public function upsert($data)
     {
@@ -58,12 +62,50 @@ class DB extends \mysqli
     }
     public function exe()
     {
+        $this->bind();
+        // print_r($this->query);
+        // print_r("<br>");
         $smt = $this->prepare($this->query);
         $smt->execute($this->placeholder);
         $this->result = $smt->get_result();
         $this->rows = $this->affected_rows;
         // $this->result = $this->execute_query($this->query, $this->placeholder);
         return $this;
+    }
+    public function bind()
+    {
+        if (count($this->where["AND"]) > 0) {
+            if (isset($this->enable)) {
+                $this->WhereQ(["enable", ["1"]]);
+            }
+            $this->query .= " WHERE ";
+            if (count($this->where["AND"]) > 0) {
+                $this->bindwhere($this->where["AND"], "AND");
+            }
+            if (count($this->where["OR"]) > 0) {
+                $this->bindwhere($this->where["OR"], "OR");
+            }
+        }
+        if ($this->limit && $this->limit > 0) {
+            $this->query .= " LIMIT " . $this->limit;
+        }
+    }
+    public function bindwhere($data, $join = "AND")
+    {
+        $this->query .= ($join == "AND" ? "" : " $join ") . implode($join, array_map(function ($value) {
+            // print_r($value);
+            // print_r("<br>");
+            if (is_array($value[2])) {
+                $this->placeholder = [...$this->placeholder, ...$value[2]];
+                return " `$value[0]` $value[1] " . "(" . implode(",", array_map(fn () => "?", $value[2])) . ")";
+            } elseif ($value[1] == "IN") {
+                $this->placeholder = [...$this->placeholder, $value[2]];
+                return " `$value[0]` $value[1] (?)";
+            } else {
+                $this->placeholder = [...$this->placeholder, $value[2]];
+                return " `$value[0]` $value[1] ?";
+            }
+        }, array_values($data)));
     }
     public function many()
     {
@@ -75,11 +117,16 @@ class DB extends \mysqli
     }
     public function lastInserted()
     {
-        return $this->SelectQ()->where(['id' => [$this->insert_id]])->exe();
+        return $this->SelSet()->where(['id' => [$this->insert_id]])->exe();
     }
     public function getInserted()
     {
-        return $this->SelectQ()->WhereCustomQ([['id', "<", [$this->insert_id]]])->rawsql(" ORDER BY id DESC LIMIT $this->rows");
+        return $this->SelSet()->rawsql(" ORDER BY id DESC ")->LimitQ($this->rows);
+    }
+    public function findQ($value, $key = "id")
+    {
+        $this->WhereQ([$key => [$value]]);
+        return $this;
     }
     public function UpsertQ($data)
     {
@@ -94,15 +141,18 @@ class DB extends \mysqli
         $this->query .= $sql;
         return $this;
     }
+    public function CreateQ($data)
+    {
+        $this->placeholder = [...$this->placeholder, ...array_values($data)];
+        $this->query .= "( " . implode(",", array_keys($data)) . " ) VALUES " . "(" . implode(",", array_map(fn () => "?", array_values($data))) . ")";
+        return $this;
+    }
     public function InsertQ($data)
     {
         if (count($data) > 0) {
             $this->query .= "( " . implode(",", array_keys($data[0])) . " ) VALUES " . implode(",", array_map(function ($row) {
-
                 $this->placeholder = [...$this->placeholder, ...array_values($row)];
-                return "(" . implode(",", array_map(function ($col) {
-                    return "?";
-                }, $row)) . ")";
+                return "(" . implode(",", array_map(fn () => "?", $row)) . ")";
             }, $data));
         }
         return $this;
@@ -111,38 +161,28 @@ class DB extends \mysqli
     {
         $this->query = "UPDATE $this->table SET " . implode(" , ", array_map(function ($key, $value) {
             $this->placeholder = [...$this->placeholder, $value];
-            return "$key = (" . implode(",", array_map(function ($x) {
-                return "?";
-            }, $value)) . ")";
+            return "$key = ?";
         }, array_keys($data), array_values($data)));
         return $this;
     }
-    public function SelectQ()
+    public function WhereQ($where, $type = "AND")
     {
-        $this->placeholder = [];
-        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table ";
+        array_map(function ($key, $value) use ($type) {
+            $this->where[$type][] = [$key, "IN", $value];
+        }, array_keys($where), array_values($where));
         return $this;
     }
-    public function WhereQ($where)
+    public function WhereCustomQ($where, $type = "AND")
     {
-        $this->query .= " WHERE " .  implode(" AND ", array_map(function ($key, $value) {
-            $this->placeholder = [...$this->placeholder, ...$value];
-            return " `$key` IN (" . implode(",", array_map(function () {
-                return "?";
-            }, $value)) . ")";
-        }, array_keys($where), array_values($where)));
-        return $this;
-    }
-    public function WhereCustomQ($where)
-    {
-        $this->query .= " WHERE " .  implode(" AND ", array_map(function ($value) {
-            $this->placeholder = [...$this->placeholder, $value[2]];
-            return " `$value[0]` $value[1] ?";
-        }, array_values($where)));
+        array_map(function ($value) use ($type) {
+            $this->where[$type][] = [$value[0], $value[1],  $value[2]];
+        }, array_values($where));
         return $this;
     }
     public function SelSet()
     {
+        $this->where = ["AND" => [], "OR" => []];
+        $this->placeholder = [];
         $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
         return $this;
     }
@@ -163,7 +203,7 @@ class DB extends \mysqli
     }
     public function  LimitQ(int $limit)
     {
-        $this->query .= " LIMIT " . $limit;
+        $this->limit = $limit;
         return $this;
     }
 }

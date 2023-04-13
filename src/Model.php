@@ -42,6 +42,26 @@ abstract class Model
     {
         return (new static())->_where($where);
     }
+    public function andwhere($data)
+    {
+        $this->db->WhereQ($data);
+        return $this;
+    }
+    public function orwhere($data)
+    {
+        $this->db->WhereQ($data, "OR");
+        return $this;
+    }
+    public function andWhereC($data)
+    {
+        $this->db->WhereCustomQ($data);
+        return $this;
+    }
+    public function orWhereC($data)
+    {
+        $this->db->WhereCustomQ($data, "OR");
+        return $this;
+    }
     public static function wherec($where)
     {
         return (new static())->_wherec($where);
@@ -52,14 +72,24 @@ abstract class Model
         $this->items = (array)$this->db->many();
         return $this;
     }
+    public function first()
+    {
+        $this->db = $this->db->exe();
+        $this->items = (array)$this->db->first();
+        if (count($this->items) > 0) {
+            $this->singular = true;
+            return $this;
+        }
+        return null;
+    }
     public function _wherec($where = [])
     {
-        $this->db->SelSet()->WhereCustomQ($where);
+        $this->db->SelSet()->WhereCustomQ(Req::get($this->model, $where));
         return $this;
     }
     public function _where($where = [])
     {
-        $this->db->where($where);
+        $this->db->where(Req::get($this->model, $where));
         return $this;
     }
 
@@ -68,21 +98,13 @@ abstract class Model
     {
         $x = (new static());
         $x->db->find($value, $key);
-        $x->items = (array)$x->db->first();
-        if (count($x->items) > 0) {
-            $x->singular = true;
-            return $x;
-        }
-        return null;
+        $x->first();
+        return $x;
     }
-
-    //insert
-    public function insert($data)
+    public function in(Type $var = null)
     {
-        $this->db->create($data);
-        return $this;
+        # code...
     }
-
     public function getInserted()
     {
         $this->db->lastInserted();
@@ -98,10 +120,18 @@ abstract class Model
     }
     public static function create($data = '')
     {
-        $x = (new static())->insert($data);
+        $x = (new static());
+        $x->db->create(Req::get($x->model, $data));
         return $x;
     }
 
+    //insert
+    public static function insert($data)
+    {
+        $x = (new static());
+        $x->db->insert($data);
+        return $x;
+    }
     //update
     public static function upsert($data)
     {
@@ -110,20 +140,26 @@ abstract class Model
 
     public function update($data)
     {
-        $this->db->update($data);
+        $this->db->update(Req::get($this->model, $data));
         return $this;
     }
 
     public function _upsert($data)
     {
-        $this->db->upsert($data);
+        $this->db->upsert(Req::get($this->model, $data));
         return $this;
     }
 
+    public function toggle($where, $filed = "enable")
+    {
+        $x = (new static());
+        $x->db->UpSet()->WhereQ($where)->rawsql("SET `$filed` = NOT `$filed`")->exe();
+        return $x;
+    }
     //delete
     public static function delete($where)
     {
-        return (new static())->db->delete($where)->result->fetch_assoc();
+        return (new static())->db->delete($where)->exe();
     }
 
     public function clean($data)
