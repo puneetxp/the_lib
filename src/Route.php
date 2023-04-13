@@ -36,12 +36,13 @@ class Route
 
     public function active_route_set()
     {
-        $this->_uri = trim(isset($_SERVER['REQUEST_URI']) ? filter_var($_SERVER['REQUEST_URI'], FILTER_SANITIZE_URL) : '/', $this->_trim);
+        $this->_uri = trim(isset($_SERVER['REDIRECT_URL']) ? filter_var($_SERVER['REDIRECT_URL'], FILTER_SANITIZE_URL) : '/', $this->_trim);
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
         $this->_realUri = explode('/', $this->_uri);
         $this->_roles = Sessions::roles();
         if (isset($_POST['_method'])) {
             $this->_method = strtoupper($_POST['_method']);
+            unset($_POST['_method']);
         }
     }
 
@@ -56,7 +57,7 @@ class Route
                 return $this->run();
             }
         }
-        Response::not_found("Not Found");
+        echo Response::not_found("Not Found");
     }
 
     public function check_permission()
@@ -67,6 +68,7 @@ class Route
                     return $this;
                 }
                 echo Response::not_authorised();
+                return null;
             }
         }
         echo Response::NotLogin();

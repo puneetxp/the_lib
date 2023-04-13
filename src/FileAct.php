@@ -18,10 +18,10 @@ class FileAct
    }
 
    public $files = [];
-   public function public(string $public, string $pre = "/storage\/")
+   public function public(string $public, string $pre = '/storage/')
    {
       $this->public = $pre . $public;
-      $this->dir .= "/public\/" . $this->public;
+      $this->dir .= '/public/' . $public;
       return $this;
    }
    public function checkdir()
