@@ -61,7 +61,7 @@ class Auth
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
-            $auth = User::create([$user])->getInserted()->array();
+            $auth = User::create($user)->getInserted()->array();
             if (is_array($auth)) {
                 if (session_status() === PHP_SESSION_ACTIVE) {
                     session_destroy();
