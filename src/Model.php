@@ -101,10 +101,6 @@ abstract class Model
         $x->first();
         return $x;
     }
-    public function in(Type $var = null)
-    {
-        # code...
-    }
     public function getInserted()
     {
         $this->db->lastInserted();
