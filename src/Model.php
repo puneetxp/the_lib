@@ -142,7 +142,7 @@ abstract class Model
 
     public function _upsert($data)
     {
-        $this->db->upsert(Req::get($this->model, $data));
+        $this->db->upsert(Req::array($this->model, $data));
         return $this;
     }
 

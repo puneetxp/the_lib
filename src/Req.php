@@ -32,6 +32,10 @@ class Req
          ARRAY_FILTER_USE_KEY
       );
    }
+   public static function array(array $keys, array $data)
+   {
+      return  array_filter($data, fn ($value) => Req::get($keys, $value));
+   }
    public static function one(string $one)
    {
       return self::only([$one]);
