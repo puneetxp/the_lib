@@ -1,6 +1,6 @@
 <?php
 
-namespace App\The;
+namespace The;
 
 use GdImage;
 
