@@ -81,7 +81,7 @@ class Route
         $attributes = [];
         foreach ($fakeUri as $key => $value) {
             if ($value == '.+') {
-                $attributes[] = $this->_realUri[$key];
+                $attributes[] = $this->_realUri[$key - 1];
             }
         }
         echo call_user_func_array($this->_match_route['handler'], $attributes);
