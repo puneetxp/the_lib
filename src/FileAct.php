@@ -82,7 +82,7 @@ class FileAct
    {
       $this->checkdir();
       foreach ($this->reArrayFiles($this->file) as $file) {
-         $this->files[] = ['name' => $file['name'], 'dir' => $this->dir . "/" . $file["name"], 'public' => $this->public . "/" . $file["name"]];
+         $this->files[] = ['name' => $file['name'], 'path' => $this->dir . "/" . $file["name"],  'dir' => $this->dir , 'public' => $this->public . "/" . $file["name"]];
          move_uploaded_file($file['tmp_name'], $this->dir . "/" . $file['name']);
       }
       return $this;
@@ -104,19 +104,5 @@ class FileAct
    public static function delete($path)
    {
       unlink($path);
-   }
-
-   public static function fopen_dir($link)
-   {
-      $filename = $link;
-      $dirname = dirname($filename);
-      if (!is_dir($dirname)) {
-         mkdir($dirname, 0755, true);
-      }
-      return fopen($filename, 'w');
-   }
-   public static function createfile($dir, $string)
-   {
-      fwrite(Self::fopen_dir($dir), $string);
    }
 }
