@@ -21,7 +21,11 @@ class FileAct
    public function public(string $public, string $pre = '/storage/')
    {
       $this->public = $pre . $public;
-      $this->dir .= '/public/' . $public;
+      if ($public == "") {
+         $this->dir .= '/public';
+      } else {
+         $this->dir .= '/public/' . $public;
+      }
       return $this;
    }
    public function checkdir()
@@ -82,7 +86,9 @@ class FileAct
    {
       $this->checkdir();
       foreach ($this->reArrayFiles($this->file) as $file) {
+         // $this->files[] = ['name' => $file['name'], 'dir' => $this->dir . "/" . $file["name"], 'public' => $this->public . "/" . $file["name"]];
          $this->files[] = ['name' => $file['name'], 'path' => $this->dir . "/" . $file["name"],  'dir' => $this->dir, 'public' => $this->public . "/" . $file["name"]];
+         // $this->files[] = ['name' => $file['name'], 'dir' => $this->dir, 'path' => $this->dir . "/" . $file["name"], 'public' => $this->public . "/" . $file["name"]];
          move_uploaded_file($file['tmp_name'], $this->dir . "/" . $file['name']);
       }
       return $this;
@@ -105,6 +111,7 @@ class FileAct
    {
       unlink($path);
    }
+
 
    public static function fopen_dir($link)
    {
