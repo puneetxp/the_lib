@@ -70,16 +70,14 @@ class FileAct
    {
       $this->checkdir();
       if ($name == '') {
-         $target_file = $this->dir . basename($_FILES[$this->file]["name"]);
+         $target_file = $this->dir . DIRECTORY_SEPARATOR . basename($_FILES[$this->file]["name"]);
       } else {
-         $target_file = $this->dir . $name . pathinfo($_FILES[$this->file]['name'], PATHINFO_EXTENSION);
+         $target_file = $this->dir . DIRECTORY_SEPARATOR . $name . pathinfo($_FILES[$this->file]['name'], PATHINFO_EXTENSION);
       }
       if (move_uploaded_file($_FILES[$this->file]["tmp_name"], $target_file)) {
          $this->files[] = $target_file;
-         return $this;
-      } else {
-         return false;
       }
+      return $this;
    }
 
    public function ups()
