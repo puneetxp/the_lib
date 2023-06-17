@@ -94,6 +94,11 @@ class Img
       }
       // dd($info['mime']);
       switch ($info['mime']) {
+         // avif
+         case "image/avif":
+            $this->im = imagecreatefromavif($this->source);
+            break;
+            // jpg
          case "image/gif":
             $this->im = imageCreateFromGif($this->source);
             break;
