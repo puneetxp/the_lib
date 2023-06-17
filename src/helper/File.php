@@ -1,14 +1,8 @@
 <?php
-function fopen_dir($link)
+function imd(string $path, string $ext)
 {
- $filename = $link;
- $dirname = dirname($filename);
- if (!is_dir($dirname)) {
-  mkdir($dirname, 0755, true);
- }
- return fopen($filename, 'w');
-}
-function createfile($dir, $string)
-{
- fwrite(fopen_dir($dir), $string);
+ $dir = pathinfo($path, PATHINFO_DIRNAME);
+ $name = pathinfo($path, PATHINFO_FILENAME);
+ $ext = pathinfo($path, PATHINFO_EXTENSION);
+ return $dir . DIRECTORY_SEPARATOR . $ext . DIRECTORY_SEPARATOR . $name . $ext;
 }

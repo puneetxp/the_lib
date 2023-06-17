@@ -1,21 +1,22 @@
 {
-    "name": "puneetxp/the",
-    "description": "php dependcies for The framework",
-    "type": "library",
-    "license": "Apache-2.0",
-    "autoload": {
-        "psr-4": {
-            "The\\": "src/"
-        }
+  "name": "puneetxp/the",
+  "description": "php dependcies for The framework",
+  "type": "library",
+  "license": "Apache-2.0",
+  "autoload": {
+    "psr-4": {
+      "The\\": "src/"
     },
-    "authors": [
-        {
-            "name": "Puneet Sharma",
-            "email": "puneetsharma9@hotmail.com"
-        }
-    ],
-    "minimum-stability": "RC",
-    "require": {
-        "php": ">=8.1"
+    "files": ["helper/File.php"]
+  },
+  "authors": [
+    {
+      "name": "Puneet Sharma",
+      "email": "puneetsharma9@hotmail.com"
     }
+  ],
+  "minimum-stability": "RC",
+  "require": {
+    "php": ">=8.1"
+  }
 }
