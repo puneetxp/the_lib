@@ -18,13 +18,15 @@ class FileAct
    }
 
    public $files = [];
-   public function public(string $public, string $pre = '/storage/')
+   public function public(string $public, string $pre = '/storage')
    {
       $this->public = $pre . $public;
       if ($public == "") {
          $this->dir .= '/public';
+         $this->public = $pre . $public;
       } else {
          $this->dir .= '/public/' . $public;
+         $this->public = $pre . "/" . $public;
       }
       return $this;
    }
@@ -80,6 +82,20 @@ class FileAct
       return $this;
    }
 
+   public function fileupload($file, $name)
+   {
+      $x = "Can't Upload";
+      $this->checkdir();
+      if ($name == '') {
+         $target_file = $this->dir . DIRECTORY_SEPARATOR . "." . basename($file["name"]);
+      } else {
+         $target_file = $this->dir . DIRECTORY_SEPARATOR . $name . "." . pathinfo($file['name'], PATHINFO_EXTENSION);
+      }
+      if (move_uploaded_file($file['tmp_name'], $target_file)) {
+         $x = ['name' => $file['name'], 'path' => $this->dir . "/" . $file["name"],  'dir' => $this->dir, 'public' => $this->public . "/" . $name . "." . pathinfo($file['name'], PATHINFO_EXTENSION)];
+      }
+      return $x;
+   }
    public function ups()
    {
       $this->checkdir();
@@ -116,7 +132,7 @@ class FileAct
       $filename = $link;
       $dirname = dirname($filename);
       if (!is_dir($dirname)) {
-         mkdir($dirname, 0755, true);
+         mkdir($dirname, 0777, true);
       }
       return fopen($filename, 'w');
    }
