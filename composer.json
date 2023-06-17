@@ -7,7 +7,7 @@
     "psr-4": {
       "The\\": "src/"
     },
-    "files": ["helper/File.php"]
+    "files": ["helper/function.php"]
   },
   "authors": [
     {
