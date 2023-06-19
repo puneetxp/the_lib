@@ -24,7 +24,7 @@ class Sessions
                     array_push($roles , "isuper");
                     return [...array_values(array_column($x->array()['role'], 'name')), ...array_values($roles)];
                 }
-                return [array_values(array_column($x->array()['role'], 'name'))];
+                return array_values(array_column($x->array()['role'], 'name'));
             }
             return [];
         }
