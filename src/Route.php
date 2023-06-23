@@ -17,7 +17,7 @@ class Route
     private $_roles = [];
     public function __construct(
         $routes,
-        private $_url ="REDIRECT_URL"
+        private $_url ="REQUEST_URI"
     ) {
         ob_start();
         session_start([
