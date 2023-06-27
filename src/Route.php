@@ -17,7 +17,7 @@ class Route
     private $_roles = [];
     public function __construct(
         $routes,
-        private $_url ="REQUEST_URI"
+        private $_url = "REQUEST_URI"
     ) {
         ob_start();
         session_start([
@@ -37,7 +37,7 @@ class Route
 
     public function active_route_set()
     {
-        $this->_uri = trim(isset($_SERVER[$this->_url]) ? filter_var($_SERVER[$this->_url], FILTER_SANITIZE_URL) : '/', $this->_trim);
+        $this->_uri = trim(parse_url($_SERVER[$this->_url], PHP_URL_PATH), $this->_trim);
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
         $this->_realUri = explode('/', $this->_uri);
         $this->_roles = Sessions::roles();
@@ -50,7 +50,7 @@ class Route
     public function run_route($routes)
     {
         foreach ($routes[$this->_method] as $value) {
-            if (preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
+            if (count($this->_realUri) === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
                 if (isset($this->_match_route['roles'])) {
                     return $this->check_permission()?->run();
