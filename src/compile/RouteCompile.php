@@ -92,6 +92,8 @@ class RouteCompile
             $this->route[$method] = [];
         }
         $route['handler'][0] = $route['handler'][0] . "::class";
+        $route["path"] = trim($route["path"], "/\^$");
+        $route["n"] = count(explode("/", $route["path"]));
         $this->route[$method] = [...$this->route[$method], $route];
     }
     public function addroutes($y)
