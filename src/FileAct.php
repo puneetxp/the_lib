@@ -33,7 +33,7 @@ class FileAct
    public function checkdir()
    {
       if (!is_dir($this->dir)) {
-         mkdir($this->dir, 0775, true);
+         mkdir(directory: $this->dir, recursive: true);
       }
    }
    public static function  init($file, $prefix = "../storage")
