@@ -93,11 +93,6 @@ class Auth
         }
     }
 
-    public static function auth_roles()
-    {
-        return Sessions::roles();
-    }
-
     public static function status()
     {
         if (isset($_SESSION['user_id'])) {

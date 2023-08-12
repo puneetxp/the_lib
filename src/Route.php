@@ -15,7 +15,7 @@ class Route
     private $_match_route = [];
     private $_realUri;
     private $_n = 0;
-    private $_roles = [];
+    private $_login;
     public function __construct(
         $routes,
         private $_url = "REQUEST_URI"
@@ -42,7 +42,7 @@ class Route
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
         $this->_realUri = explode('/', $this->_uri);
         $this->_n = count($this->_realUri);
-        $this->_roles = Sessions::roles();
+        $this->_login = Sessions::get_current_user();
         if (isset($_POST['_method'])) {
             $this->_method = strtoupper($_POST['_method']);
             unset($_POST['_method']);
@@ -54,10 +54,18 @@ class Route
         foreach ($routes[$this->_method] as $value) {
             if ($this->_n === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
-                if (isset($this->_match_route['roles'])) {
-                    return $this->check_permission()?->run();
+                if (!isset($this->_match_route["islogin"]) || $this->_match_route["islogin"]) {
+                    return $this->run();
+                } else {
+                    if ($this->_match_route["islogin"] && $this->_login) {
+                        if (isset($this->_match_route['roles'])) {
+                            return $this->check_permission()?->run();
+                        } else {
+                            return $this->run();
+                        }
+                    }
+                    echo Response::NotLogin();
                 }
-                return $this->run();
             }
         }
         echo Response::not_found("Not Found");
@@ -65,16 +73,10 @@ class Route
 
     public function check_permission()
     {
-        if (isset($this->_match_route['roles'])) {
-            if (session_status() === PHP_SESSION_ACTIVE) {
-                if (array_intersect($this->_match_route['roles'], $this->_roles)) {
-                    return $this;
-                }
-                echo Response::not_authorised();
-                return null;
-            }
+        if (array_intersect($this->_match_route['roles'], Sessions::roles())) {
+            return $this;
         }
-        echo Response::NotLogin();
+        echo Response::not_authorised();
         return null;
     }
 
