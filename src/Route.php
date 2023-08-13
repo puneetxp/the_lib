@@ -9,6 +9,7 @@ namespace The;
  */
 class Route
 {
+
     private $_trim = '/\^$';
     private $_uri = '';
     private $_method = "";
@@ -16,6 +17,7 @@ class Route
     private $_realUri;
     private $_n = 0;
     private $_login;
+
     public function __construct(
         $routes,
         private $_url = "REQUEST_URI"
@@ -57,6 +59,11 @@ class Route
                 if (!(isset($this->_match_route["islogin"]) && $this->_match_route["islogin"])) {
                     return $this->run();
                 } else {
+                    if (isset($this->_match_route["guard"])) {
+                        foreach ($this->_match_route["guard"] as $guard) {
+                            call_user_func($guard) ? $this->run() : "";
+                        }
+                    }
                     if ($this->_match_route["islogin"] && $this->_login) {
                         if (isset($this->_match_route['roles'])) {
                             return $this->check_permission()?->run();
