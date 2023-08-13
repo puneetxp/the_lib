@@ -61,7 +61,7 @@ class Route
                 } else {
                     if (isset($this->_match_route["guard"])) {
                         foreach ($this->_match_route["guard"] as $guard) {
-                            call_user_func($guard) ? $this->run() : "";
+                            call_user_func($guard);
                         }
                     }
                     if ($this->_match_route["islogin"] && $this->_login) {
