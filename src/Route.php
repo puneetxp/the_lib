@@ -54,7 +54,7 @@ class Route
         foreach ($routes[$this->_method] as $value) {
             if ($this->_n === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
-                if (!isset($this->_match_route["islogin"]) || $this->_match_route["islogin"]) {
+                if (!isset($this->_match_route["islogin"]) && !$this->_match_route["islogin"]) {
                     return $this->run();
                 } else {
                     if ($this->_match_route["islogin"] && $this->_login) {
@@ -65,6 +65,7 @@ class Route
                         }
                     }
                     echo Response::NotLogin();
+                    return;
                 }
             }
         }
