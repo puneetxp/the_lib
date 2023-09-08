@@ -80,7 +80,7 @@ abstract class Model {
   }
 
   public function _wherec($where = []) {
-    $this->db->SelSet()->WhereCustomQ(Req::get($this->model, $where));
+    $this->db->SelSet()->WhereCustomQ($where);
     return $this;
   }
 
