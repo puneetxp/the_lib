@@ -61,6 +61,13 @@ class RouteCompile
         if (in_array("a", $curd["crud"])) {
             $this->addroute(["handler" => [$curd["class"], "all"], ...$prefix], "GET");
         }
+
+        if (in_array("w",  $curd["crud"])) {
+            $x = $prefix;
+            $x["path"] .= "/where";
+            $this->addroute(["handler" => [$curd["class"], "where"], ...$x], "POST");
+        }
+
         if (in_array("r",  $curd["crud"])) {
             $x = $prefix;
             $x["path"] .= "/.+";
