@@ -17,7 +17,7 @@ class Sessions
     public static function roles()
     {
         $roles = [];
-        $x = Active_role::where(["user_id" => [$_SESSION['user_id']]])->get()?->wfast(['role']);
+        $x = Active_role::where(["user_id" => [$_SESSION['user_id']]])->get()?->with(['role']);
         if ($x != null) {
             if ($_SESSION['user_id'] == 1) {
                 array_push($roles, "isuper");
