@@ -26,7 +26,8 @@ class Req
 
    public static function get(array $keys, array $data)
    {
-      return array_filter(
+      // print_r($data);
+      return  array_filter(
          $data,
          fn ($key) => in_array($key, $keys),
          ARRAY_FILTER_USE_KEY
@@ -34,7 +35,7 @@ class Req
    }
    public static function array(array $keys, array $data)
    {
-      return  array_filter($data, fn ($value) => Req::get($keys, $value));
+      return array_map(fn ($item) => Req::get($keys, (array)$item), $data);
    }
    public static function one(string $one)
    {
