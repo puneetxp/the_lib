@@ -53,7 +53,7 @@ abstract class Model {
         $pages = [];
         $totalpages = $this->page['result'] / $this->page['pageItems'];
         $int = intdiv($number, 2);
-        if ($totalpages >= $number || $this->page['pageNumber'] >= $int +1 ) {
+        if ($totalpages >= $number || $this->page['pageNumber'] >= $int + 1) {
             $i = 0;
             while ($totalpages > $i && $i < $number) {
                 ++$i;
@@ -62,18 +62,18 @@ abstract class Model {
         } elseif ($this->page['pageNumber'] > $totalpages - $int + 1) {
             $i = $this->page['pageNumber'];
             $pages = [$i];
-            while( $totalpages >$i ){
+            while ($totalpages > $i) {
                 ++$i;
                 $pages[] = $i;
             }
             $i = $this->page['pageNumber'];
-            while(count($pages) > $number){
+            while (count($pages) > $number) {
                 --$i;
-                $pages[] = [$i,...$pages] ;
+                $pages[] = [$i, ...$pages];
             }
         } else {
             $i = -2;
-            while(count($pages)>$number){
+            while (count($pages) > $number) {
                 $pages[] = $i + $this->page['pageNumber'];
                 ++$i;
             }
