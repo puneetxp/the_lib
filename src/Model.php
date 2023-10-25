@@ -32,9 +32,12 @@ abstract class Model {
     }
 
     public function paginate(int $pageNumber = 1, int $pageItems = 25) {
+        $pageNumber = $_GET['pageNumber'] ?? $pageNumber;
+        $pageItems = $_GET['pageItems'] ?? $pageItems;
         $this->paginate['result'] = $this->db->count();
         $this->paginate['pageNumber'] = $pageNumber;
         $this->paginate['pageItems'] = $pageItems;
+
         $offset = ($pageNumber - 1) * $pageItems;
         $this->db->OffsetQ($offset)->LimitQ($pageItems);
         $this->get();
