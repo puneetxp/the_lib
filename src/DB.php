@@ -17,7 +17,7 @@ class DB extends \mysqli
         "OR" => []
     ];
     public function __construct(
-        private $table,
+        private $table = "",
         protected $col = ["*"]
     ) {
         parent::__construct();
@@ -27,6 +27,12 @@ class DB extends \mysqli
             exit('Connect Error (' . mysqli_connect_errno() . ') '
                 . mysqli_connect_error());
         }
+    }
+    public static function raw(string $sql ,array $bind = []) {
+        $new =(new self())->rawsql($sql);
+        $new->placeholder = $bind;
+        $new->bind();
+        return $new->exe();
     }
     public function where($where)
     {
