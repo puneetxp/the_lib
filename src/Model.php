@@ -37,8 +37,10 @@ abstract class Model {
         $this->paginate['result'] = $this->db->count();
         $this->paginate['pageNumber'] = $pageNumber;
         $this->paginate['pageItems'] = $pageItems;
-
         $offset = ($pageNumber - 1) * $pageItems;
+        while($offset > $this->paginate['result']){
+            $offset -= $pageItems;
+        }
         $this->db->OffsetQ($offset)->LimitQ($pageItems);
         $this->get();
     }
