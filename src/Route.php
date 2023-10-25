@@ -7,8 +7,7 @@ namespace The;
  *
  * @author puneetxp
  */
-class Route
-{
+class Route {
 
     private $_trim = '/\^$';
     private $_uri = '';
@@ -19,8 +18,8 @@ class Route
     private $_login;
 
     public function __construct(
-        $routes,
-        private $_url = "REQUEST_URI"
+            $routes,
+            private $_url = "REQUEST_URI"
     ) {
         ob_start();
         session_start([
@@ -38,8 +37,7 @@ class Route
         $this->run_route($routes);
     }
 
-    public function active_route_set()
-    {
+    public function active_route_set() {
         $this->_uri = trim(parse_url($_SERVER[$this->_url], PHP_URL_PATH), $this->_trim);
         $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
         $this->_realUri = explode('/', $this->_uri);
@@ -51,8 +49,7 @@ class Route
         }
     }
 
-    public function run_route($routes)
-    {
+    public function run_route($routes) {
         foreach ($routes[$this->_method] as $value) {
             if ($this->_n === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
@@ -79,8 +76,7 @@ class Route
         echo Response::not_found("Not Found");
     }
 
-    public function check_permission()
-    {
+    public function check_permission() {
         if (array_intersect($this->_match_route['roles'], Sessions::roles())) {
             return $this;
         }
@@ -88,8 +84,7 @@ class Route
         return null;
     }
 
-    public function run()
-    {
+    public function run() {
         $fakeUri = explode('/', $this->_match_route['path']);
         $attributes = [];
         foreach ($fakeUri as $key => $value) {
@@ -101,8 +96,7 @@ class Route
         return null;
     }
 
-    public function not_found()
-    {
+    public function not_found() {
         echo Response::not_found("Not Found");
     }
 }

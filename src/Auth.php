@@ -11,11 +11,9 @@ use App\Model\{
  *
  * @author puneetxp
  */
-class Auth
-{
+class Auth {
 
-    public static function login()
-    {
+    public static function login() {
         $user = Req::only(['email', 'password']);
         $pass = hash('sha3-256', $user['password']);
         $auth = User::find($user['email'], 'email')?->array();
@@ -26,22 +24,22 @@ class Auth
                     session_destroy();
                 }
                 (Req::one('remember_me')) ?
-                    session_start([
-                        'cookie_lifetime' => 1440,
-                        'cookie_secure' => secure,
-                        "cookie_path" => '/',
-                        'cookie_domain' => sslhost,
-                        'cookie_httponly' => httponly,
-                        'cookie_samesite' => samesite
-                    ]) :
-                    session_start([
-                        'cookie_lifetime' => 0,
-                        'cookie_secure' => secure,
-                        "cookie_path" => '/',
-                        'cookie_domain' => sslhost,
-                        'cookie_httponly' => httponly,
-                        'cookie_samesite' => samesite
-                    ]);
+                                session_start([
+                                    'cookie_lifetime' => 1440,
+                                    'cookie_secure' => secure,
+                                    "cookie_path" => '/',
+                                    'cookie_domain' => sslhost,
+                                    'cookie_httponly' => httponly,
+                                    'cookie_samesite' => samesite
+                                ]) :
+                                session_start([
+                                    'cookie_lifetime' => 0,
+                                    'cookie_secure' => secure,
+                                    "cookie_path" => '/',
+                                    'cookie_domain' => sslhost,
+                                    'cookie_httponly' => httponly,
+                                    'cookie_samesite' => samesite
+                ]);
                 $_SESSION['user_id'] = $auth['id'];
                 $auth['roles'] = Sessions::roles();
                 return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
@@ -51,13 +49,11 @@ class Auth
         return Response::not_found("User Not Found");
     }
 
-    public static function g_auth()
-    {
+    public static function g_auth() {
         return;
     }
 
-    public static function register()
-    {
+    public static function register() {
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
@@ -67,22 +63,22 @@ class Auth
                     session_destroy();
                 }
                 (Req::one('remember_me')) ?
-                    session_start([
-                        'cookie_lifetime' => 1440,
-                        'cookie_secure' => secure,
-                        "cookie_path" => '/',
-                        'cookie_domain' => sslhost,
-                        'cookie_httponly' => httponly,
-                        'cookie_samesite' => samesite
-                    ]) :
-                    session_start([
-                        'cookie_lifetime' => 0,
-                        'cookie_secure' => secure,
-                        "cookie_path" => '/',
-                        'cookie_domain' => sslhost,
-                        'cookie_httponly' => httponly,
-                        'cookie_samesite' => samesite
-                    ]);
+                                session_start([
+                                    'cookie_lifetime' => 1440,
+                                    'cookie_secure' => secure,
+                                    "cookie_path" => '/',
+                                    'cookie_domain' => sslhost,
+                                    'cookie_httponly' => httponly,
+                                    'cookie_samesite' => samesite
+                                ]) :
+                                session_start([
+                                    'cookie_lifetime' => 0,
+                                    'cookie_secure' => secure,
+                                    "cookie_path" => '/',
+                                    'cookie_domain' => sslhost,
+                                    'cookie_httponly' => httponly,
+                                    'cookie_samesite' => samesite
+                ]);
                 $_SESSION['user_id'] = $auth['id'];
                 $auth['roles'] = Sessions::roles();
                 return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
@@ -93,8 +89,7 @@ class Auth
         }
     }
 
-    public static function status()
-    {
+    public static function status() {
         if (isset($_SESSION['user_id'])) {
             $auth = User::find($_SESSION['user_id'])?->array();
             if ($auth !== null) {
@@ -110,8 +105,7 @@ class Auth
         }
     }
 
-    public static function logout()
-    {
+    public static function logout() {
         session_destroy();
         return Response::json('logout');
     }

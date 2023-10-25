@@ -14,6 +14,8 @@ abstract class Model {
     protected $table;
     protected $name;
     protected $model;
+    public $paginate = [];
+
     //__construct
     public function __construct() {
         $this->db = new DB($this->table);
@@ -27,6 +29,15 @@ abstract class Model {
     public function set_col($col) {
         $this->col = $col;
         return $this;
+    }
+
+    public function paginate(int $pageNumber = 1, int $pageItems = 25) {
+        $this->paginate['result'] = $this->db->count();
+        $this->paginate['pageNumber'] = $pageNumber;
+        $this->paginate['pageItems'] = $pageItems;
+        $offset = ($pageNumber - 1) * $pageItems;
+        $this->db->OffsetQ($offset)->LimitQ($pageItems);
+        $this->get();
     }
 
     //GET_data
@@ -114,7 +125,7 @@ abstract class Model {
         return $this;
     }
 
-    public static function create($data = '') {
+    public static function create($data = []) {
         $x = (new static());
         $x->db->create(Req::get($x->model, $data));
         return $x;
@@ -186,7 +197,7 @@ abstract class Model {
             $first && $this->with = [$data];
             $x[$data] = $this->isnull($this->relation($data));
         }
-        $this->singular ?  $x[$this->name] = [$this->items] : $x[$this->name] = $this->items;
+        $this->singular ? $x[$this->name] = [$this->items] : $x[$this->name] = $this->items;
         $this->items = $x;
         return $this;
     }
