@@ -32,12 +32,14 @@ abstract class Model {
     }
 
     public function paginate(int $pageNumber = 1, int $pageItems = 25) {
-        $pageNumber = $_GET['pageNumber'] ?? $pageNumber;
+        $pageNumber = $_GET['page'] ?? $pageNumber;
         $pageItems = $_GET['pageItems'] ?? $pageItems;
         $this->page['result'] = $this->db->count();
         if ($this->page['result']) {
             $this->page['pageNumber'] = $pageNumber;
             $this->page['pageItems'] = $pageItems;
+            $this->page['totalpages'] = $this->page['result'] / $this->page['pageItems'];
+            $this->page['get'] = http_build_query($_GET);
             $offset = ($pageNumber - 1) * $pageItems;
             while ($offset > $this->page['result']) {
                 $offset -= $pageItems;
@@ -51,31 +53,28 @@ abstract class Model {
 
     protected function pages(int $number = 5) {
         $pages = [];
-        $totalpages = $this->page['result'] / $this->page['pageItems'];
         $int = intdiv($number, 2);
-        if ($totalpages >= $number || $this->page['pageNumber'] >= $int + 1) {
-            $i = 0;
-            while ($totalpages > $i && $i < $number) {
+        if ($this->page['totalpages'] >= $number || $this->page['pageNumber'] >= $int + 1) {
+            $i = -$int;
+            while (count($pages) < $number)  {
+                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
                 ++$i;
-                $pages[] = $i;
             }
-        } elseif ($this->page['pageNumber'] > $totalpages - $int + 1) {
+        } elseif ($this->page['pageNumber'] > $this->page['totalpages'] - $int + 1) {
             $i = $this->page['pageNumber'];
             $pages = [$i];
-            while ($totalpages > $i) {
+            while ($this->page['totalpages'] > $i) {
                 ++$i;
-                $pages[] = $i;
+                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
             }
             $i = $this->page['pageNumber'];
             while (count($pages) > $number) {
                 --$i;
-                $pages[] = [$i, ...$pages];
+                $pages[] = [http_build_query(["page"=>$i])."&".$this->page['get'], ...$pages];
             }
-        } else {
-            $i = -2;
-            while (count($pages) > $number) {
-                $pages[] = $i + $this->page['pageNumber'];
-                ++$i;
+        } elseif( $this->page['totalpages'] < $number) {
+            for($i =1; $i >=$this->page['totalpages'];++$i) {
+                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
             }
         }
         return $pages;
