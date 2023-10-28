@@ -7,7 +7,6 @@ abstract class Model {
     //items
     protected $items = [];
     protected $singular = false;
-    protected $col = ["*"];
     protected DB $db;
     protected $relations = [];
     protected array $with = [];
@@ -23,11 +22,6 @@ abstract class Model {
 
     public function set_singular() {
         $this->singular = true;
-        return $this;
-    }
-
-    public function set_col($col) {
-        $this->col = $col;
         return $this;
     }
 
@@ -117,9 +111,14 @@ abstract class Model {
     }
 
     public function get() {
-        $this->db = $this->db->exe();
+        $this->db->SelSet()->exe();
         $this->items = (array) $this->db->many();
         return $this;
+    }
+
+    public function count(){
+        $this->db->CountSet()->exe();
+        return (array) $this->db->many();
     }
 
     public function first() {

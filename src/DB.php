@@ -20,7 +20,6 @@ class DB extends \mysqli {
 
     public function __construct(
             private $table = "",
-            protected $col = ["*"]
     ) {
         parent::__construct();
         parent::options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
@@ -39,8 +38,7 @@ class DB extends \mysqli {
     }
 
     public function where($where) {
-        $this->SelSet()->WhereQ($where);
-        return $this;
+        return $this->WhereQ($where);
     }
 
     public function find($value, $key = "id") {
@@ -75,46 +73,9 @@ class DB extends \mysqli {
         $smt = $this->prepare($this->query);
         $smt->execute($this->placeholder);
         $this->result = $smt->get_result();
+        //$this->result = $this->execute_query($this->query, $this->placeholder);
         $this->rows = $this->affected_rows;
-        // $this->result = $this->execute_query($this->query, $this->placeholder);
         return $this;
-    }
-
-    public function count() {
-        $placeholder = [];
-        $sql = "";
-
-        function bind($data, $join, $placeholder, $sql) {
-
-            foreach ($data as $item) {
-                if (is_array($item[1])) {
-                    $placeholder = [...$placeholder, ...$item[1]];
-                } else {
-                    $placeholder = [...$placeholder, $item[1]];
-                }
-            }
-            $sql .= ($join == "AND" ? "" : " $join ") . implode($join, array_map(fn($value) => " `$value[0]` $value[1] " . (is_array($value[2]) ? "(" . implode(",", array_map(fn() => "?", $value[2])) . ")" : ($value[1] == "IN" ? "(?)" : "?")), array_values($data)));
-            return [$sql, $placeholder];
-        }
-
-        $query = "count (*) FROM $this->table";
-        $placeholder = [];
-        if (count($this->where["AND"]) > 0) {
-            if (isset($this->enable)) {
-                $query .= $this->WhereQ(["enable", ["1"]]);
-            }
-            $this->query .= " WHERE ";
-            if (count($this->where["AND"]) > 0) {
-                [$query, $placeholder] = bind($this->where["AND"], "AND", $sql, $placeholder);
-            }
-            if (count($this->where["OR"]) > 0) {
-                [$query, $placeholder] = bind($this->where["OR"], "OR", $sql, $placeholder);
-            }
-        }
-        $smt = $this->prepare($query);
-        $smt->execute($placeholder);
-        return $smt->get_result();
-        //return $this->execute_query($this->query, $this->placeholder);
     }
 
     public function bind() {
@@ -227,13 +188,17 @@ class DB extends \mysqli {
         return $this;
     }
 
-    public function SelSet() {
+    public function SelSet($col = ["*"]) {
         $this->where = ["AND" => [], "OR" => []];
         $this->placeholder = [];
-        $this->query = "SELECT " . implode(" , ", $this->col) . " FROM $this->table";
+        $this->query = "SELECT " . implode(" , ", $col) . " FROM $this->table";
         return $this;
     }
 
+    public function CountSet($id = "*"){
+        $this->query = "SELECT count($id) FROM $this->table";
+        return $this;
+    }
     public function InSet() {
         $this->query = "INSERT INTO $this->table";
         return $this;
