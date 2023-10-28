@@ -28,7 +28,7 @@ abstract class Model {
     public function paginate(int $pageNumber = 1, int $pageItems = 25) {
         $pageNumber = $_GET['page'] ?? $pageNumber;
         $pageItems = $_GET['pageItems'] ?? $pageItems;
-        $this->page['result'] = $this->db->count();
+        $this->page['result'] = $this->count();
         if ($this->page['result']) {
             $this->page['pageNumber'] = $pageNumber;
             $this->page['pageItems'] = $pageItems;
