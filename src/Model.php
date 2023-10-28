@@ -54,27 +54,25 @@ abstract class Model {
     protected function pages(int $number = 5) {
         $pages = [];
         $int = intdiv($number, 2);
-        if ($this->page['totalpages'] >= $number || $this->page['pageNumber'] >= $int + 1) {
-            $i = -$int;
+        if($this->page['totalpages'] <= $number ){
+            for($i =1; $i >= $this->page['totalpages']; ++$i) {
+                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
+            }
+        } elseif ($this->page['pageNumber'] > $int && $this->page['pageNumber'] >= $this->page['totalpages'] - $int ) {
+            $i = $this->page['pageNumber'] - $int;
             while (count($pages) < $number)  {
-                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
+                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
                 ++$i;
             }
-        } elseif ($this->page['pageNumber'] > $this->page['totalpages'] - $int + 1) {
-            $i = $this->page['pageNumber'];
-            $pages = [$i];
-            while ($this->page['totalpages'] > $i) {
+        } else {
+            if($this->page['pageNumber'] < $int ){
+                $i = 1;
+            }else{
+                $i = $this->page['totalpages'] - $number;
+            }
+            while (count($pages) < $number)  {
+                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
                 ++$i;
-                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
-            }
-            $i = $this->page['pageNumber'];
-            while (count($pages) > $number) {
-                --$i;
-                $pages[] = [http_build_query(["page"=>$i])."&".$this->page['get'], ...$pages];
-            }
-        } elseif( $this->page['totalpages'] < $number) {
-            for($i =1; $i >=$this->page['totalpages'];++$i) {
-                $pages[] = http_build_query(["page"=>$i])."&".$this->page['get'];
             }
         }
         return $pages;
