@@ -285,7 +285,7 @@ abstract class Model {
                             $model_item[$this->relations[$model]['key']] == $item[$this->relations[$model]['name']]
                     )
             );
-            return [...$item, $model => isset($this->relations[$model]['level']) ? $y[0] : $y];
+            return [...$item, $model => isset($this->relations[$model]['level']) ? ($y[0] ?? "" ) : $y];
         }, $data);
     }
 
