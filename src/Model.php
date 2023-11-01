@@ -13,6 +13,7 @@ abstract class Model {
     protected $table;
     protected $name;
     protected $model;
+    protected $one;
     public $page = [];
 
     //__construct
@@ -285,7 +286,7 @@ abstract class Model {
                             $model_item[$this->relations[$model]['key']] == $item[$this->relations[$model]['name']]
                     )
             );
-            return [...$item, $model => isset($this->relations[$model]['level']) ? ($y[0] ?? "" ) : $y];
+            return [...$item, $model => in_array($model, $this->one) ? ($y[0] ?? "" ) : $y];
         }, $data);
     }
 
