@@ -8,8 +8,31 @@ use App\Model\{
 
 class Sessions {
 
-    public static function create($user_id) {
-        $_SESSION['user_id'] = $user_id;
+    public static function create($auth) {
+        $_SESSION['user_id'] = $auth['id'];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        (Req::one('remember_me')) ?
+            session_start([
+                'cookie_lifetime' => 1440,
+                'cookie_secure' => secure,
+                "cookie_path" => '/',
+                'cookie_domain' => sslhost,
+                'cookie_httponly' => httponly,
+                'cookie_samesite' => samesite
+            ]) :
+            session_start([
+                'cookie_lifetime' => 0,
+                'cookie_secure' => secure,
+                "cookie_path" => '/',
+                'cookie_domain' => sslhost,
+                'cookie_httponly' => httponly,
+                'cookie_samesite' => samesite
+            ]);
+        $_SESSION['user_id'] = $auth['id'];
+        $auth['roles'] = Sessions::roles();
+        return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
     }
 
     public static function roles() {
