@@ -25,24 +25,7 @@ class Auth {
         return Response::not_found("User Not Found");
     }
 
-    public static function g_auth($token) {
-        $vars = preg_split("/\./", $token);
-        $load = json_decode(base64_decode($vars[1]));
-        $client = new Google_Client(['client_id' => $_ENV["login_method"]['google']['client_id']]);
-        $payload = $client->verifyIdToken($token);
-        if ($payload) {
-          $auth = User::find($load->email, 'email') ?? User::create(["name"=>$load->name, "email"=> $load->email, "google_id"=>$load->sub, "photo"=>$load->picture])->getInserted();
-          $user = $auth->array();
-          if(!$user['google_id']){
-            $auth->update(["google_id" => $load->sub]);
-          }
-          return Sessions::create($user);
-        //   header('Location : ' . website . '/auth/profile');
-        } else {
-            Response::why("Token Not Correct");
-        //   header('Location: ' . website . '/auth/login');
-        }
-    }
+
     public static function register() {
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
