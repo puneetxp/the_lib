@@ -12,76 +12,44 @@ use App\Model\{
  * @author puneetxp
  */
 class Auth {
-
     public static function login() {
         $user = Req::only(['email', 'password']);
-        $pass = hash('sha3-256', $user['password']);
         $auth = User::find($user['email'], 'email')?->array();
         if ($auth != null) {
+            $pass = hash('sha3-256', $user['password']);
             if ($auth['password'] == $pass) {
-                $_SESSION['user_id'] = $auth['id'];
-                if (session_status() === PHP_SESSION_ACTIVE) {
-                    session_destroy();
-                }
-                (Req::one('remember_me')) ?
-                                session_start([
-                                    'cookie_lifetime' => 1440,
-                                    'cookie_secure' => secure,
-                                    "cookie_path" => '/',
-                                    'cookie_domain' => sslhost,
-                                    'cookie_httponly' => httponly,
-                                    'cookie_samesite' => samesite
-                                ]) :
-                                session_start([
-                                    'cookie_lifetime' => 0,
-                                    'cookie_secure' => secure,
-                                    "cookie_path" => '/',
-                                    'cookie_domain' => sslhost,
-                                    'cookie_httponly' => httponly,
-                                    'cookie_samesite' => samesite
-                ]);
-                $_SESSION['user_id'] = $auth['id'];
-                $auth['roles'] = Sessions::roles();
-                return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
+                return Sessions::create($auth);
             }
             Response::why("Password Not Correct");
         }
         return Response::not_found("User Not Found");
     }
 
-    public static function g_auth() {
-        return;
+    public static function g_auth($token) {
+        $vars = preg_split("/\./", $token);
+        $load = json_decode(base64_decode($vars[1]));
+        $client = new Google_Client(['client_id' => $_ENV["login_method"]['google']['client_id']]);
+        $payload = $client->verifyIdToken($token);
+        if ($payload) {
+          $auth = User::find($load->email, 'email') ?? User::create(["name"=>$load->name, "email"=> $load->email, "google_id"=>$load->sub, "photo"=>$load->picture])->getInserted();
+          $user = $auth->array();
+          if(!$user['google_id']){
+            $auth->update(["google_id" => $load->sub]);
+          }
+          return Sessions::create($user);
+        //   header('Location : ' . website . '/auth/profile');
+        } else {
+            Response::why("Token Not Correct");
+        //   header('Location: ' . website . '/auth/login');
+        }
     }
-
     public static function register() {
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
             $auth = User::create($user)->getInserted()->array();
             if (is_array($auth)) {
-                if (session_status() === PHP_SESSION_ACTIVE) {
-                    session_destroy();
-                }
-                (Req::one('remember_me')) ?
-                                session_start([
-                                    'cookie_lifetime' => 1440,
-                                    'cookie_secure' => secure,
-                                    "cookie_path" => '/',
-                                    'cookie_domain' => sslhost,
-                                    'cookie_httponly' => httponly,
-                                    'cookie_samesite' => samesite
-                                ]) :
-                                session_start([
-                                    'cookie_lifetime' => 0,
-                                    'cookie_secure' => secure,
-                                    "cookie_path" => '/',
-                                    'cookie_domain' => sslhost,
-                                    'cookie_httponly' => httponly,
-                                    'cookie_samesite' => samesite
-                ]);
-                $_SESSION['user_id'] = $auth['id'];
-                $auth['roles'] = Sessions::roles();
-                return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
+                return Sessions::create($auth);
             }
             return Response::bad_req();
         } else {
