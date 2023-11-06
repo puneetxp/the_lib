@@ -49,24 +49,24 @@ abstract class Model {
     protected function pages(int $number = 5) {
         $pages = [];
         $int = intdiv($number, 2);
-        if($this->page['totalpages'] <= $number ){
-            for($i =1; $i >= $this->page['totalpages']; ++$i) {
-                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
+        if ($this->page['totalpages'] <= $number) {
+            for ($i = 1; $i >= $this->page['totalpages']; ++$i) {
+                $pages[$i] = http_build_query(["page" => $i]) . "&" . $this->page['get'];
             }
-        } elseif ($this->page['pageNumber'] > $int && $this->page['pageNumber'] >= $this->page['totalpages'] - $int ) {
+        } elseif ($this->page['pageNumber'] > $int && $this->page['pageNumber'] >= $this->page['totalpages'] - $int) {
             $i = $this->page['pageNumber'] - $int;
-            while (count($pages) < $number)  {
-                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
+            while (count($pages) < $number) {
+                $pages[$i] = http_build_query(["page" => $i]) . "&" . $this->page['get'];
                 ++$i;
             }
         } else {
-            if($this->page['pageNumber'] < $int ){
+            if ($this->page['pageNumber'] < $int) {
                 $i = 1;
-            }else{
+            } else {
                 $i = $this->page['totalpages'] - $number;
             }
-            while (count($pages) < $number)  {
-                $pages[$i] = http_build_query(["page"=>$i])."&".$this->page['get'];
+            while (count($pages) < $number) {
+                $pages[$i] = http_build_query(["page" => $i]) . "&" . $this->page['get'];
                 ++$i;
             }
         }
@@ -117,7 +117,7 @@ abstract class Model {
         return $this;
     }
 
-    public function count(){
+    public function count() {
         $this->db->CountSet()->exe();
         return (array) $this->db->many();
     }
@@ -146,8 +146,7 @@ abstract class Model {
     public static function find($value, $key = 'id') {
         $x = (new static());
         $x->db->find($value, $key);
-        $x->first();
-        return $x;
+        return $x->first();
     }
 
     public function getInserted() {
@@ -286,7 +285,7 @@ abstract class Model {
                             $model_item[$this->relations[$model]['key']] == $item[$this->relations[$model]['name']]
                     )
             );
-            return [...$item, $model => in_array($model, $this->one) ? ($y[0] ?? "" ) : $y];
+            return [...$item, $model => in_array($model, $this->one ?? []) ? ($y[0] ?? "" ) : $y];
         }, $data);
     }
 
