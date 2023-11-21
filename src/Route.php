@@ -18,7 +18,7 @@ class Route {
     private $_login;
 
     public function __construct(
-            $routes,
+            private $routes,
             private $_url = "REQUEST_URI"
     ) {
         ob_start();
@@ -33,13 +33,27 @@ class Route {
         // if (json_decode(file_get_contents('php://input'), true)) {
         //     $_POST = json_decode(file_get_contents('php://input'), true);
         // }
-        $this->active_route_set();
-        $this->run_route($routes);
+        if (isset($_POST['_action'])) {
+            $actions = $_POST["_action"];
+            $return = [];
+            foreach ($actions as $action) {
+                ob_start();
+                $action = json_decode($action, true);
+                $this->active_route_set($action['url'], $action['method'], $action['data'] ?? null);
+                echo $this->run_route();
+                $return[$action['url']] = json_decode(ob_get_contents());
+                ob_end_clean();
+            }
+            echo Response::json($return);
+        } else {
+            $this->active_route_set();
+            echo $this->run_route();
+        }
     }
 
-    public function active_route_set() {
-        $this->_uri = trim(parse_url($_SERVER[$this->_url], PHP_URL_PATH), $this->_trim);
-        $this->_method = isset($_SERVER['REQUEST_METHOD']) ? filter_var($_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) : 'GET';
+    public function active_route_set($url = null, $method = null, $data = null) {
+        $this->_uri = trim(parse_url($url ?? $_SERVER[$this->_url], PHP_URL_PATH), $this->_trim);
+        $this->_method = filter_var($method ?? $_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) ?? 'GET';
         $this->_realUri = explode('/', $this->_uri);
         $this->_n = count($this->_realUri);
         $this->_login = Sessions::get_current_user();
@@ -49,8 +63,8 @@ class Route {
         }
     }
 
-    public function run_route($routes) {
-        foreach ($routes[$this->_method] as $value) {
+    public function run_route() {
+        foreach ($this->routes[$this->_method] as $value) {
             if ($this->_n === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
                 if (!(isset($this->_match_route["islogin"]) && $this->_match_route["islogin"])) {
@@ -68,20 +82,18 @@ class Route {
                             return $this->run();
                         }
                     }
-                    echo Response::NotLogin();
-                    return;
+                    return Response::NotLogin();
                 }
             }
         }
-        echo Response::not_found("Not Found");
+        return Response::not_found("Not Found");
     }
 
     public function check_permission() {
         if (array_intersect($this->_match_route['roles'], Sessions::roles())) {
             return $this;
         }
-        echo Response::not_authorised();
-        return null;
+        return Response::not_authorised();
     }
 
     public function run() {
@@ -92,11 +104,10 @@ class Route {
                 $attributes[] = $this->_realUri[$key];
             }
         }
-        echo call_user_func_array($this->_match_route['handler'], $attributes);
-        return null;
+        return call_user_func_array($this->_match_route['handler'], $attributes);
     }
 
     public function not_found() {
-        echo Response::not_found("Not Found");
+        return Response::not_found("Not Found");
     }
 }

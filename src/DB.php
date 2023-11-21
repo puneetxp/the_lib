@@ -42,7 +42,7 @@ class DB extends \mysqli {
     }
 
     public function find($value, $key = "id") {
-        return $this->SelSet()->findQ($value, $key)->LimitQ(1);
+        return $this->findQ($value, $key)->LimitQ(1);
     }
 
     public function create($data) {
@@ -68,12 +68,13 @@ class DB extends \mysqli {
 
     public function exe() {
         $this->bind();
-        // print_r($this->query);
+//         print_r($this->query);
         // print_r("<br>");
         $smt = $this->prepare($this->query);
+        // print_r($this->placeholder);
         $smt->execute($this->placeholder);
         $this->result = $smt->get_result();
-        //$this->result = $this->execute_query($this->query, $this->placeholder);
+        // $this->result = $this->execute_query($this->query, $this->placeholder);
         $this->rows = $this->affected_rows;
         return $this;
     }
@@ -105,13 +106,13 @@ class DB extends \mysqli {
                             // print_r("<br>");
                             if (is_array($value[2])) {
                                 $this->placeholder = [...$this->placeholder, ...$value[2]];
-                                return " `$value[0]` $value[1] " . "(" . implode(",", array_map(fn() => "?", $value[2])) . ")";
+                                return " `$value[0]` $value[1] " . "(" . implode(",", array_map(fn() => "? ", $value[2])) . ")";
                             } elseif ($value[1] == "IN") {
                                 $this->placeholder = [...$this->placeholder, $value[2]];
-                                return " `$value[0]` $value[1] (?)";
+                                return " `$value[0]` $value[1] (?) ";
                             } else {
                                 $this->placeholder = [...$this->placeholder, $value[2]];
-                                return " `$value[0]` $value[1] ?";
+                                return " `$value[0]` $value[1] ? ";
                             }
                         }, array_values($data)));
     }
@@ -167,6 +168,7 @@ class DB extends \mysqli {
     }
 
     public function UpdateQ($data) {
+        $this->placeholder = [];
         $this->query = "UPDATE $this->table SET " . implode(" , ", array_map(function ($key, $value) {
                             $this->placeholder = [...$this->placeholder, $value];
                             return "$key = ?";
@@ -189,16 +191,16 @@ class DB extends \mysqli {
     }
 
     public function SelSet($col = ["*"]) {
-        $this->where = ["AND" => [], "OR" => []];
         $this->placeholder = [];
         $this->query = "SELECT " . implode(" , ", $col) . " FROM $this->table";
         return $this;
     }
 
-    public function CountSet($id = "*"){
+    public function CountSet($id = "*") {
         $this->query = "SELECT count($id) FROM $this->table";
         return $this;
     }
+
     public function InSet() {
         $this->query = "INSERT INTO $this->table";
         return $this;
