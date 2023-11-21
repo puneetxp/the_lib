@@ -12,6 +12,7 @@ use App\Model\{
  * @author puneetxp
  */
 class Auth {
+
     public static function login() {
         $user = Req::only(['email', 'password']);
         $auth = User::find($user['email'], 'email')?->array();
@@ -24,7 +25,6 @@ class Auth {
         }
         return Response::not_found("User Not Found");
     }
-
 
     public static function register() {
         $user = Req::only(['name', 'email', 'password']);
@@ -54,6 +54,22 @@ class Auth {
             header('Content-Type: application/json; charset=utf-8');
             return Response::not_authorised(false);
         }
+    }
+
+    public static function profile() {
+        $auth = User::where(["user_id" => $_SESSION['user_id']])->first(["name", "phone", "email"]);
+        if ($auth !== null) {
+            return $auth;
+        }
+        return Response::json("user not found");
+    }
+
+    public static function profileupdate() {
+        $auth = User::where(["user_id" => $_SESSION['user_id']])->update($_POST)->first(["name", "phone", "email"]);
+        if ($auth !== null) {
+            return $auth;
+        }
+        return Response::json("user not found");
     }
 
     public static function logout() {

@@ -117,14 +117,22 @@ abstract class Model {
         return $this;
     }
 
+    public function getnull() {
+        $this->db->SelSet()->exe();
+        $this->items = (array) $this->db->many();
+        if (count($this->items)) {
+            return $this;
+        }
+        return null;
+    }
+
     public function count() {
         $this->db->CountSet()->exe();
         return (array) $this->db->many();
     }
 
-    public function first() {
-        $this->db = $this->db->exe();
-        $this->items = (array) $this->db->first();
+    public function first($select = ["*"]) {
+        $this->items = (array) $this->db->SelSet($select)->exe()->first();
         if (count($this->items) > 0) {
             $this->singular = true;
             return $this;
@@ -218,24 +226,26 @@ abstract class Model {
     //call realtionship
     //Better for spa and fastest way
     public function with($data, bool $first = true) {
-        $x = [];
-        if (is_array($data)) {
-            $first && $this->with = $data;
-            foreach ($data as $item) {
-                if (is_array($item)) {
-                    foreach ($item as $key => $value) {
-                        $x = array_merge($this->isnull($this->relation($key)?->with($value), false), $x);
+        if (count($this->items) || $this->singular) {
+            $x = [];
+            if (is_array($data)) {
+                $first && $this->with = $data;
+                foreach ($data as $item) {
+                    if (is_array($item)) {
+                        foreach ($item as $key => $value) {
+                            $x = array_merge($this->isnull($this->relation($key)?->with($value), false), $x);
+                        }
+                    } else {
+                        $x[$item] = $this->isnull($this->relation($item));
                     }
-                } else {
-                    $x[$item] = $this->isnull($this->relation($item));
                 }
+            } else {
+                $first && $this->with = [$data];
+                $x[$data] = $this->isnull($this->relation($data));
             }
-        } else {
-            $first && $this->with = [$data];
-            $x[$data] = $this->isnull($this->relation($data));
+            $this->singular ? $x[$this->name] = [$this->items] : $x[$this->name] = $this->items;
+            $this->items = $x;
         }
-        $this->singular ? $x[$this->name] = [$this->items] : $x[$this->name] = $this->items;
-        $this->items = $x;
         return $this;
     }
 

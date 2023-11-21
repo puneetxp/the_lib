@@ -14,22 +14,22 @@ class Sessions {
             session_destroy();
         }
         (Req::one('remember_me')) ?
-            session_start([
-                'cookie_lifetime' => 1440,
-                'cookie_secure' => secure,
-                "cookie_path" => '/',
-                'cookie_domain' => sslhost,
-                'cookie_httponly' => httponly,
-                'cookie_samesite' => samesite
-            ]) :
-            session_start([
-                'cookie_lifetime' => 0,
-                'cookie_secure' => secure,
-                "cookie_path" => '/',
-                'cookie_domain' => sslhost,
-                'cookie_httponly' => httponly,
-                'cookie_samesite' => samesite
-            ]);
+                        session_start([
+                            'cookie_lifetime' => 1440,
+                            'cookie_secure' => secure,
+                            "cookie_path" => '/',
+                            'cookie_domain' => sslhost,
+                            'cookie_httponly' => httponly,
+                            'cookie_samesite' => samesite
+                        ]) :
+                        session_start([
+                            'cookie_lifetime' => 0,
+                            'cookie_secure' => secure,
+                            "cookie_path" => '/',
+                            'cookie_domain' => sslhost,
+                            'cookie_httponly' => httponly,
+                            'cookie_samesite' => samesite
+        ]);
         $_SESSION['user_id'] = $auth['id'];
         $auth['roles'] = Sessions::roles();
         return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
@@ -37,15 +37,14 @@ class Sessions {
 
     public static function roles() {
         $roles = [];
-        $x = Active_role::where(["user_id" => [$_SESSION['user_id']]])->get()?->with(['role']);
-        if ($x != null) {
-            if ($_SESSION['user_id'] == 1) {
-                array_push($roles, "isuper");
-                return [...array_values(array_column($x->array()['role'], 'name')), ...array_values($roles)];
-            }
-            return array_values(array_column($x->array()['role'], 'name'));
+        $x = Active_role::where(["user_id" => [$_SESSION['user_id']]])->getnull()?->with(['role']);
+        if ($_SESSION['user_id'] == 1) {
+            array_push($roles, "isuper");
         }
-        return [];
+        if ($x != null) {
+            return [...array_values(array_column($x->array()['role'], 'name')), ...array_values($roles)];
+        }
+        return $roles;
     }
 
     public static function get_current_user() {
