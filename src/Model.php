@@ -290,7 +290,7 @@ abstract class Model {
     public function filter_relation($model, $data, $base = null) {
         return array_map(function ($item) use ($model, $base) {
             $y = array_values(
-                    array_filter($base ? $base[$model] : $this->items[$model],
+                    array_filter($base ? $base[$model] : $this->items[$model] ?? [],
                             fn($model_item) =>
                             $model_item[$this->relations[$model]['key']] == $item[$this->relations[$model]['name']]
                     )
