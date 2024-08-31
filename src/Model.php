@@ -165,8 +165,8 @@ abstract class Model {
     }
 
     public function getsInserted() {
-        $this->db->getInserted();
-        $this->get();
+        $this->db->getInserted()->exe();
+        $this->items = (array) $this->db->many();
         return $this;
     }
 
