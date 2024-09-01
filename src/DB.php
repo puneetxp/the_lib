@@ -57,8 +57,8 @@ class DB extends \mysqli {
         return $this->InSet()->InsertQ($data)->exe();
     }
 
-    public function delete($where = []) {
-        return $this->DelSet()->WhereQ($where);
+    public function delete() {
+        return $this->DelSet();
     }
 
     public function upsert($data) {
