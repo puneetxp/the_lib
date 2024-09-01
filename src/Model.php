@@ -204,9 +204,9 @@ abstract class Model {
         return $x;
     }
 
-    //delete
-    public static function delete($where) {
-        return (new static())->db->delete($where)->exe();
+    public function delete(){
+        $this->db->delete();
+        return $this;
     }
 
     public function clean($data) {
