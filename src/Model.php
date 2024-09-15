@@ -165,8 +165,8 @@ abstract class Model {
     }
 
     public function getsInserted() {
-        $this->db->getInserted()->exe();
-        $this->items = (array) $this->db->many();
+        $this->db->getInserted();
+        $this->get();
         return $this;
     }
 
@@ -204,10 +204,16 @@ abstract class Model {
         return $x;
     }
 
-    public function delete(){
+    //delete
+    public static function delete($where) {
+        return (new static())->db->delete($where)->exe();
+    }
+
+    public function del(){
         $this->db->delete();
         return $this;
     }
+
 
     public function clean($data) {
         return array_map(fn($item) => array_filter($item, fn($key) => in_array($key, $this->fillable)), $data);
