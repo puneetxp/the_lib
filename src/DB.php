@@ -130,7 +130,7 @@ class DB extends \mysqli {
     }
 
     public function getInserted() {
-        return $this->SelSet()->rawsql(" ORDER BY id DESC ")->LimitQ($this->rows);
+        return $this->SelSet()->rawsql(" ORDER BY updated_at DESC ")->LimitQ($this->rows);
     }
 
     public function findQ($value, $key = "id") {

@@ -14,7 +14,6 @@ abstract class Model {
     protected $name;
     protected $model;
     protected $one;
-    protected array $relation = [];
     public $page = [];
 
     //__construct
@@ -300,12 +299,13 @@ abstract class Model {
 
     public function filter_relation(string $relation, array $data, $base) {
         return array_values(array_map(function ($item) use ($relation, $base) {
-                    $item[$relation] = array_values(
+                    $y = array_values(
                             array_filter($base ? $base[$relation] : $this->items[$relation] ?? [],
                                     fn($model_item) =>
                                     $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
                             )
                     );
+                    $item[$relation] = in_array($relation, $this->one ?? []) ? ($y[0] ?? "" ) : $y;
                     return $item;
                 }, $data));
     }
@@ -330,4 +330,3 @@ abstract class Model {
         return $data;
     }
 }
-

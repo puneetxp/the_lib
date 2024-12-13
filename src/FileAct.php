@@ -15,7 +15,7 @@ class FileAct {
             protected $file,
             protected string $dir,
     ) {
-        
+
     }
 
     public $files = [];
