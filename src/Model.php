@@ -14,6 +14,7 @@ abstract class Model {
     protected $name;
     protected $model;
     protected $one;
+    protected array $relation = [];
     public $page = [];
 
     //__construct
@@ -165,8 +166,8 @@ abstract class Model {
     }
 
     public function getsInserted() {
-        $this->db->getInserted();
-        $this->get();
+        $this->db->getInserted()->exe();
+        $this->items = (array) $this->db->many();
         return $this;
     }
 
@@ -206,14 +207,13 @@ abstract class Model {
 
     //delete
     public static function delete($where) {
-        return (new static())->db->delete($where)->exe();
+        return (new static())->db->where($where)->delete()->exe();
     }
 
-    public function del(){
+    public function del() {
         $this->db->delete();
         return $this;
     }
-
 
     public function clean($data) {
         return array_map(fn($item) => array_filter($item, fn($key) => in_array($key, $this->fillable)), $data);
@@ -239,17 +239,20 @@ abstract class Model {
                 foreach ($data as $item) {
                     if (is_array($item)) {
                         foreach ($item as $key => $value) {
-                            $x = array_merge($this->isnull($this->relation($key)?->with($value), false), $x);
+                            $this->relation[$key]["class"] = $this->relation($key)?->with($value);
+                            $x = array_merge($this->isnull($this->relation[$key]["class"], false), $x);
                         }
                     } else {
-                        $x[$item] = $this->isnull($this->relation($item));
+                        $this->relation[$item]["class"] = $this->relation($item);
+                        $x[$item] = $this->isnull($this->relation[$item]["class"]);
                     }
                 }
             } else {
                 $first && $this->with = [$data];
-                $x[$data] = $this->isnull($this->relation($data));
+                $this->relation[$data]["class"] = $this->relation($data);
+                $x[$data] = $this->isnull($this->relation[$data]["class"]);
             }
-            $this->singular ? $x[$this->name] = [$this->items] : $x[$this->name] = $this->items;
+            $this->singular ? ($x[$this->name] = [$this->items] ) : ($x[$this->name] = $this->items);
             $this->items = $x;
         }
         return $this;
@@ -286,32 +289,45 @@ abstract class Model {
         return $this;
     }
 
-    private function sortout($relation, $data, $base = null) {
-        foreach ($relation as $item) {
-            $data = is_array($item) ? $this->filter_relations($item, $data, $base) : $this->filter_relation($item, $data, $base);
+    private function sortout($relations, $data, $base = null) {
+        foreach ($relations as $relation) {
+            $data = is_array($relation) ?
+                    $this->filter_relations($relation, $data, $base ?? $this->items) :
+                    $this->filter_relation($relation, $data, $base ?? $this->items);
         }
         return $data;
     }
 
-    public function filter_relation($model, $data, $base = null) {
-        return array_map(function ($item) use ($model, $base) {
-            $y = array_values(
-                    array_filter($base ? $base[$model] : $this->items[$model] ?? [],
-                            fn($model_item) =>
-                            $model_item[$this->relations[$model]['key']] == $item[$this->relations[$model]['name']]
-                    )
-            );
-            return [...$item, $model => in_array($model, $this->one ?? []) ? ($y[0] ?? "" ) : $y];
-        }, $data);
+    public function filter_relation(string $relation, array $data, $base) {
+        return array_values(array_map(function ($item) use ($relation, $base) {
+                    $item[$relation] = array_values(
+                            array_filter($base ? $base[$relation] : $this->items[$relation] ?? [],
+                                    fn($model_item) =>
+                                    $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
+                            )
+                    );
+                    return $item;
+                }, $data));
     }
 
-    public function filter_relations($model, $data, $base = null) {
-        foreach (array_keys($data) as $index) {
-            foreach ($model as $key => $item) {
-                $data = $this->filter_relation($key, $data);
-                $data[$index][$key] = (new $this->relations[$key]['callback']())->sortout($item, $data[$index][$key], $base ? $base : $this->items);
+    public function filter_relations(array $relation, array $data, array $base) {
+        foreach ($relation as $key => $item) {
+            if (is_string($key)) {
+                $data = $this->filter_relation($key, $data, $base);
+                foreach ($data as $datakey => $value) {
+                    $data[$datakey][$key] = $this->relation[$key]["class"]->sortout($item, $value[$key], $base);
+                }
+            } else {
+                if (is_array($item)) {
+                    foreach ($data as $datakey => $value) {
+                        $data[$datakey] = $this->sortout($item, $base[$this->name], $base);
+                    }
+                } else {
+                    $data[$item] = $this->filter_relation($item, $data, $base);
+                }
             }
         }
         return $data;
     }
 }
+
