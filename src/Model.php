@@ -15,6 +15,8 @@ abstract class Model {
     protected $model;
     protected $one;
     public $page = [];
+    public $relation = [];
+    public $fillable = [];
 
     //__construct
     public function __construct() {
@@ -33,7 +35,7 @@ abstract class Model {
         if ($this->page['result']) {
             $this->page['pageNumber'] = $pageNumber;
             $this->page['pageItems'] = $pageItems;
-            $this->page['totalpages'] = $this->page['result'] / $this->page['pageItems'];
+            $this->page['totalpages'] = (int)$this->page['result'] / (int)$this->page['pageItems'];
             $this->page['get'] = http_build_query($_GET);
             $offset = ($pageNumber - 1) * $pageItems;
             while ($offset > $this->page['result']) {
