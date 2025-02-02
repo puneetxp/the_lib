@@ -15,8 +15,8 @@ abstract class Model {
     protected $model;
     protected $one;
     public $page = [];
-    public $relation = [];
-    public $fillable = [];
+    protected $relation = [];
+    protected $fillable = [];
 
     //__construct
     public function __construct() {
