@@ -1,3 +1,4 @@
+
 <?php
 
 namespace The;
@@ -52,11 +53,12 @@ class Img {
             imageresolution($image, $x, $y);
             $resolution = imageresolution($image);
         }
-        $thumb = imagecreatetruecolor($resolution[0], $resolution[1]);
-        imagecopyresized($thumb, $image, 0, 0, 0, 0, $resolution[0], $resolution[1], $info[0], $info[1]);
+        $thumb = imagecreatetruecolor(round($resolution[0]), round($resolution[1]));
+        imagecopyresized($thumb, $image, 0, 0, 0, 0, round($resolution[0]), round($resolution[1]), $info[0], $info[1]);
         imagewebp($thumb, $destination, $quality);
-        if ($removeOld)
+        if ($removeOld) {
             unlink($source);
+        }
 
         return $destination;
     }
