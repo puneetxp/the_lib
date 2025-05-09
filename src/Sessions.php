@@ -7,7 +7,12 @@ use App\Model\{
 };
 
 class Sessions {
-
+    public static function createSessoion(){
+        $sessionId = session_id();
+        header("X-Session-Id: $sessionId");
+        header("Access-Control-Expose-Headers: X-Session-Id"); // Allows frontend to read session_id
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Session-Id");
+    }
     public static function create($auth) {
         $_SESSION['user_id'] = $auth['id'];
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -32,6 +37,8 @@ class Sessions {
         ]);
         $_SESSION['user_id'] = $auth['id'];
         $auth['roles'] = Sessions::roles();
+        Sessions::createSessoion();
+        $auth['roles'] = Sessions::roles();
         return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
     }
 
@@ -52,10 +59,10 @@ class Sessions {
     }
 
     public static function update($id) {
-        
+
     }
 
     public static function delete($id) {
-        
+
     }
 }
