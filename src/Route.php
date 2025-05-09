@@ -30,6 +30,7 @@ class Route {
             'cookie_samesite' => samesite
         ]);
         date_default_timezone_set("Asia/Kolkata");
+        Sessions::createSessoion();
         // if (json_decode(file_get_contents('php://input'), true)) {
         //     $_POST = json_decode(file_get_contents('php://input'), true);
         // }
