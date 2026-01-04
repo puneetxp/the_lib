@@ -1,2 +1,4 @@
 /vendor/
 /nbproject
+.DS_Store
+.history
