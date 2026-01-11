@@ -259,6 +259,44 @@ abstract class Model {
         return $this;
     }
 
+    public function join($joins, $where = []) {
+        $joinSpecs = [];
+        foreach ($joins as $key => $val) {
+            $relationName = is_int($key) ? $val : $key;
+            $cols = is_array($val) ? ($val['cols'] ?? []) : [];
+            $alias = is_array($val) ? ($val['alias'] ?? $relationName) : $relationName;
+
+            if (isset($this->relations[$relationName])) {
+                $r = $this->relations[$relationName];
+                $joinSpecs[] = [
+                    'alias' => $alias,
+                    'table' => $r['table'],
+                    'localKey' => $r['name'],
+                    'foreignKey' => $r['key'],
+                    'cols' => $cols,
+                    'prefix' => $relationName
+                ];
+            }
+        }
+
+        $query = DB\sqlBuilder::buildJoinQuery(
+            $this->table,
+            $this->table,
+            [], 
+            $joinSpecs,
+            $where
+        );
+
+        $this->db->rawsql($query['sql']);
+        $this->db->placeholder = $query['placeholders'];
+        $this->items = (array) $this->db->exe()->many();
+        return $this;
+    }
+
+    public static function joins($joins, $where = []) {
+        return (new static())->join($joins, $where);
+    }
+
     public function isnull($x) {
         if ($x == null) {
             return [];
