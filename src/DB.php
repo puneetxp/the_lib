@@ -6,9 +6,9 @@ use mysqli_result;
 
 class DB extends \mysqli {
 
-    public mysqli_result|bool $result;
+    public $result; // type hint removal for compatibility if needed, or keep
     private $query;
-    private $placeholder = [];
+    public $placeholder = [];
     public $rows;
     protected $limit = null;
     protected $offset = null;
