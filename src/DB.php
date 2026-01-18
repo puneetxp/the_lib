@@ -7,8 +7,8 @@ use mysqli_result;
 class DB extends \mysqli {
 
     public mysqli_result|bool $result;
-    private $query;
-    private $placeholder = [];
+    protected $query;
+    public $placeholder = [];
     public $rows;
     protected $limit = null;
     protected $offset = null;

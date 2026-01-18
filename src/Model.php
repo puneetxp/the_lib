@@ -17,7 +17,6 @@ abstract class Model {
     public $page = [];
     protected $relation = [];
     protected $fillable = [];
-
     //__construct
     public function __construct() {
         $this->db = new DB($this->table);
@@ -328,7 +327,7 @@ abstract class Model {
         return $this;
     }
 
-    private function sortout($relations, $data, $base = null) {
+    protected function sortout($relations, $data, $base = null) {
         foreach ($relations as $relation) {
             $data = is_array($relation) ?
                     $this->filter_relations($relation, $data, $base ?? $this->items) :
