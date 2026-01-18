@@ -241,7 +241,7 @@ abstract class Model {
                     if (is_array($item)) {
                         foreach ($item as $key => $value) {
                             $this->relation[$key]["class"] = $this->relation($key)?->with($value);
-                            $x = array_merge($this->isnull($this->relation[$key]["class"], false), $x);
+                            $x = array_merge($this->isnull($this->relation[$key]["class"]), $x);
                         }
                     } else {
                         $this->relation[$item]["class"] = $this->relation($item);
@@ -340,7 +340,7 @@ abstract class Model {
     public function filter_relation(string $relation, array $data, $base) {
         return array_values(array_map(function ($item) use ($relation, $base) {
                     $y = array_values(
-                            array_filter($base ? $base[$relation] : $this->items[$relation] ?? [],
+                            array_filter(($base[$relation] ?? $this->items[$relation]) ?? [],
                                     fn($model_item) =>
                                     $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
                             )
