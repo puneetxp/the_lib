@@ -7,8 +7,8 @@ use mysqli_result;
 class DB extends \mysqli {
 
     public mysqli_result|bool $result;
-    protected $query;
-    public $placeholder = [];
+    private $query;
+    private $placeholder = [];
     public $rows;
     protected $limit = null;
     protected $offset = null;
@@ -171,7 +171,7 @@ class DB extends \mysqli {
         $this->placeholder = [];
         $this->query = "UPDATE $this->table SET " . implode(" , ", array_map(function ($key, $value) {
                             $this->placeholder = [...$this->placeholder, $value];
-                            return "$key = ?";
+                            return "`$key` = ?";
                         }, array_keys($data), array_values($data)));
         return $this;
     }
