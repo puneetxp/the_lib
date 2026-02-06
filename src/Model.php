@@ -344,6 +344,10 @@ abstract class Model {
                                     $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
                             )
                     );
+                    // if $y have sort key $this->relations['callback'] class having fillable having 'sort'
+                    if (count($y) > 0 && in_array('sort', (new $this->relations[$relation]['callback']())->fillable)) {
+                        usort($y, fn($a, $b) => $a['sort'] - $b['sort']);
+                    }
                     $item[$relation] = in_array($relation, $this->one ?? []) ? ($y[0] ?? "" ) : $y;
                     return $item;
                 }, $data));
