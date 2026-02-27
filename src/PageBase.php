@@ -11,8 +11,19 @@ abstract class PageBase
     {
         if (class_exists('\App\Model\Page')) {
             if (self::$pageCache === null) {
-                $blocks = \App\Model\Page::where(['slug REGEXP' => "^","enable" => 1])->get()->with(['page_block'])->array()["page_block"];
-                self::$pageCache = array_merge(['page_block' => $blocks], ...array_map(fn($x) => [$x["component"] => $x], $blocks));
+                $pageData = \App\Model\Page::where(['slug REGEXP' => "^", 'enable' => 1])
+                    ->get()
+                    ->with(['page_block'])
+                    ->array();
+
+                $pageBlocks = $pageData['page_block'] ?? [];
+
+                $blocks = array_filter($pageBlocks, function ($x) {
+                    return ($x['enable'] ?? 0) == 1;
+                });
+                self::$pageCache = array_merge(['page_block' => $blocks], ...array_map(function($x) {
+                    return [$x["component"] => $x];
+                }, $blocks));
             }
             $this->page = self::$pageCache;
         }
