@@ -7,6 +7,9 @@ abstract class PageBase
     public $page = [];
     protected static $pageCache = null;
 
+    public static $title = null;
+    public static $meta_description = null;
+    public static $canonical_url = null;
     public function __construct()
     {
         if (class_exists('\App\Model\Page')) {
@@ -18,12 +21,14 @@ abstract class PageBase
 
                 $pageBlocks = $pageData['page_block'] ?? [];
 
-                $blocks = array_filter($pageBlocks, function ($x) {
-                    return ($x['enable'] ?? 0) == 1;
-                });
-                self::$pageCache = array_merge(['page_block' => $blocks], ...array_map(function($x) {
-                    return [$x["component"] => $x];
-                }, $blocks));
+                self::$title = $pageData['title'] ?? self::$title;
+                
+                self::$meta_description = $pageData['meta_description'] ?? self::$meta_description;
+
+                self::$canonical_url = $pageData['slug'] ?? self::$canonical_url;
+
+                $blocks = array_filter($pageBlocks, fn($x) => ($x['enable'] ?? 0) == 1);
+                self::$pageCache = array_merge(['page_block' => $blocks], ...array_map(fn($x) => [$x["component"] => $x], $blocks));
             }
             $this->page = self::$pageCache;
         }
