@@ -12,9 +12,10 @@ use App\Model\{
     User
 };
 
-class SocialAuth {
-
-    public static function g_auth($token) {
+class SocialAuth
+{
+    public static function g_auth($token)
+    {
         $vars = preg_split("/\./", $token);
         $load = json_decode(base64_decode($vars[1]));
         $client = new Client(['client_id' => $_ENV["login_method"]['google']['client_id']]);
@@ -33,7 +34,8 @@ class SocialAuth {
         }
     }
 
-    public static function f_auth($token) {
+    public static function f_auth($token)
+    {
         $load = json_decode(file_get_contents("https://graph.facebook.com/" . $_ENV["login_method"]["facebook"]["api_version"] . "/me?access_token=" . $token . "&fields=name,email,picture,first_name,last_name&method=get&pretty=0&sdk=joey&suppress_http_code=1"));
         if ($load) {
             $auth = User::find($load->email, 'email') ?? User::create(["name" => $load->name, "email" => $load->email, "facebook_id" => $load->id])->getInserted();

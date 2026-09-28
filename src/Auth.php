@@ -11,9 +11,10 @@ use App\Model\{
  *
  * @author puneetxp
  */
-class Auth {
-
-    public static function login() {
+class Auth
+{
+    public static function login()
+    {
         $user = Req::only(['email', 'password']);
         $auth = User::find($user['email'], 'email')?->array();
         if ($auth != null) {
@@ -26,7 +27,8 @@ class Auth {
         return Response::not_found("User Not Found");
     }
 
-    public static function register() {
+    public static function register()
+    {
         $user = Req::only(['name', 'email', 'password']);
         $user['password'] = hash('sha3-256', $user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
@@ -40,7 +42,8 @@ class Auth {
         }
     }
 
-    public static function status() {
+    public static function status()
+    {
         if (isset($_SESSION['user_id'])) {
             $auth = User::find($_SESSION['user_id'])?->array();
             if ($auth !== null) {
@@ -56,7 +59,8 @@ class Auth {
         }
     }
 
-    public static function profile() {
+    public static function profile()
+    {
         $auth = User::where(["user_id" => $_SESSION['user_id']])->first(["name", "phone", "email"]);
         if ($auth !== null) {
             return $auth;
@@ -64,7 +68,8 @@ class Auth {
         return Response::json("user not found");
     }
 
-    public static function profileupdate() {
+    public static function profileupdate()
+    {
         $auth = User::where(["user_id" => $_SESSION['user_id']])->update($_POST)->first(["name", "phone", "email"]);
         if ($auth !== null) {
             return $auth;
@@ -72,7 +77,8 @@ class Auth {
         return Response::json("user not found");
     }
 
-    public static function logout() {
+    public static function logout()
+    {
         session_destroy();
         return Response::json('logout');
     }

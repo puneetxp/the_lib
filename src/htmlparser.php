@@ -2,8 +2,8 @@
 
 namespace The;
 
-class htmlParser {
-
+class htmlParser
+{
     public array $tags = [];
     private $status = null;
     public int $length;
@@ -27,7 +27,8 @@ class htmlParser {
         'wbr',
     ];
 
-    public function __construct(public string $htmlstring = "", public int $key = 0, public array $html = []) {
+    public function __construct(public string $htmlstring = "", public int $key = 0, public array $html = [])
+    {
         if (count($this->html)) {
             $this->length = count($this->html);
         } else {
@@ -38,11 +39,12 @@ class htmlParser {
 
     private $activetag;
 
-    public function parse(?bool $debug = null) {
+    public function parse(?bool $debug = null)
+    {
         $string = "";
         while (
-        $this->length > $this->key &&
-        $this->checktagisclose(true, $string)
+            $this->length > $this->key &&
+            $this->checktagisclose(true, $string)
         ) {
             if ($this->checktagisopen()) {
                 $this->next("checkitisopen");
@@ -58,7 +60,8 @@ class htmlParser {
         return $this;
     }
 
-    private function checktag() {
+    private function checktag()
+    {
         while (preg_match("/[A-Za-z\-\.0-9]/m", $this->html[$this->key])) {
             $this->settag();
             $this->next();
@@ -85,7 +88,8 @@ class htmlParser {
         }
     }
 
-    public function addattribute() {
+    public function addattribute()
+    {
         $attribute = "";
         $this->activetag["attribute"] = [];
         while ($this->activetag && isset($this->status) && $this->status !== "open" && $this->status !== "close") {
@@ -136,7 +140,8 @@ class htmlParser {
         }
     }
 
-    public function addstring(string $string) {
+    public function addstring(string $string)
+    {
         if (chop($string) !== "") {
             if ($this->activetag) {
                 $this->tagtostring($string);
@@ -146,7 +151,8 @@ class htmlParser {
         }
     }
 
-    private function tagtostring(string $addtionalstring = "") {
+    private function tagtostring(string $addtionalstring = "")
+    {
         if ($this->activetag) {
             $string = $this->activetag["tag"] ?? "";
             foreach ($this->activetag["attribute"] ?? [] as $key => $value) {
@@ -159,7 +165,8 @@ class htmlParser {
         }
     }
 
-    private function checktagisopen() {
+    private function checktagisopen()
+    {
         if ($this->html[$this->key] == "<") {
             if (preg_match("/[A-Za-z]/", $this->html[$this->key + 1])) {
                 if (isset($this->status) && $this->status == "open") {
@@ -174,12 +181,14 @@ class htmlParser {
         return false;
     }
 
-    private function settag() {
+    private function settag()
+    {
         $this->activetag["tag"] = ($this->activetag["tag"] ?? "") . $this->html[$this->key];
         //print_r("\n" . $this->activetag["tag"] . "\n");
     }
 
-    private function next($any = null, $key = null) {
+    private function next($any = null, $key = null)
+    {
         //print_r($any);
         $this->key++;
         if ($key) {
@@ -188,7 +197,8 @@ class htmlParser {
         //print_r($this->html[$this->key]);
     }
 
-    private function closetag(bool $bool = false, ?string $print = null, array $additionalattribute = []) {
+    private function closetag(bool $bool = false, ?string $print = null, array $additionalattribute = [])
+    {
         foreach ($additionalattribute as $key => $value) {
             $this->activetag[$key] = $value;
         }
@@ -206,7 +216,8 @@ class htmlParser {
         }
     }
 
-    private function checktagisclose($close = false, $string = null) {
+    private function checktagisclose($close = false, $string = null)
+    {
         if ($this->length > $this->key + 1) {
             $end = $this->html[$this->key] . $this->html[$this->key + 1] ?? "";
             //   print_r($end . "\n");
@@ -250,7 +261,8 @@ class htmlParser {
         }
     }
 
-    public function tostring($tags = null) {
+    public function tostring($tags = null)
+    {
         $string = "";
         $tags = $tags ?? $this->tags;
         foreach ($tags as $tag) {

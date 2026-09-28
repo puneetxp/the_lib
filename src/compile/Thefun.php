@@ -2,9 +2,10 @@
 
 namespace The\compile;
 
-class Thefun {
-
-    public static function fopen_dir($link) {
+class Thefun
+{
+    public static function fopen_dir($link)
+    {
         $filename = $link;
         $dirname = dirname($filename);
         if (!is_dir($dirname)) {
@@ -13,11 +14,13 @@ class Thefun {
         return fopen($filename, 'w');
     }
 
-    public static function php_wrapper($data) {
+    public static function php_wrapper($data)
+    {
         return '<?php ' . $data . '?> ';
     }
 
-    public static function php_w($data) {
+    public static function php_w($data)
+    {
         return '<?php ' . $data;
     }
 }
