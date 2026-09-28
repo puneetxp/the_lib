@@ -1,6 +1,7 @@
 <?php
 
-function fopen_dir($link) {
+function fopen_dir($link)
+{
     $filename = $link;
     $dirname = dirname($filename);
     if (!is_dir($dirname)) {
@@ -9,6 +10,7 @@ function fopen_dir($link) {
     return fopen($filename, 'w');
 }
 
-function createfile($dir, $string) {
+function createfile($dir, $string)
+{
     fwrite(fopen_dir($dir), $string);
 }

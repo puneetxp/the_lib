@@ -7,8 +7,8 @@ namespace The;
  *
  * @author puneetxp
  */
-class Route {
-
+class Route
+{
     private $_trim = '/\^$';
     private $_uri = '';
     private $_method = "";
@@ -18,8 +18,8 @@ class Route {
     private $_login;
 
     public function __construct(
-            private $routes,
-            private $_url = "REQUEST_URI"
+        private $routes,
+        private $_url = "REQUEST_URI"
     ) {
         ob_start();
         session_start([
@@ -52,7 +52,8 @@ class Route {
         }
     }
 
-    public function active_route_set($url = null, $method = null, $data = null) {
+    public function active_route_set($url = null, $method = null, $data = null)
+    {
         $this->_uri = trim(parse_url($url ?? $_SERVER[$this->_url], PHP_URL_PATH), $this->_trim);
         $this->_method = filter_var($method ?? $_SERVER['REQUEST_METHOD'], FILTER_SANITIZE_URL) ?? 'GET';
         $this->_realUri = explode('/', $this->_uri);
@@ -64,7 +65,8 @@ class Route {
         }
     }
 
-    public function run_route() {
+    public function run_route()
+    {
         foreach ($this->routes[$this->_method] as $value) {
             if ($this->_n === $value["n"] && preg_match("#^" . trim($value["path"], $this->_trim) . "$#", $this->_uri)) {
                 $this->_match_route = $value;
@@ -90,14 +92,16 @@ class Route {
         return Response::not_found("Not Found");
     }
 
-    public function check_permission() {
+    public function check_permission()
+    {
         if (array_intersect($this->_match_route['roles'], Sessions::roles())) {
             return $this;
         }
         return Response::not_authorised();
     }
 
-    public function run() {
+    public function run()
+    {
         $fakeUri = explode('/', $this->_match_route['path']);
         $attributes = [];
         foreach ($fakeUri as $key => $value) {
@@ -108,7 +112,8 @@ class Route {
         return call_user_func_array($this->_match_route['handler'], $attributes);
     }
 
-    public function not_found() {
+    public function not_found()
+    {
         return Response::not_found("Not Found");
     }
 }

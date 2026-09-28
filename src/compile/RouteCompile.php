@@ -2,21 +2,24 @@
 
 namespace The\compile;
 
-class RouteCompile {
-
+class RouteCompile
+{
     public $route = [];
 
-    public function __construct(array $routes) {
+    public function __construct(array $routes)
+    {
         $this->compiles($routes);
     }
 
-    public function compiles($routes) {
+    public function compiles($routes)
+    {
         foreach ($routes as $route) {
             $this->compile($route);
         }
     }
 
-    public function compile($route, $prefix = []) {
+    public function compile($route, $prefix = [])
+    {
         isset($route['islogin']) ? $prefix['islogin'] = $route['islogin'] : '';
         isset($route['path']) ? (isset($prefix['path']) ? ($prefix['path'] = $prefix['path'] . $route['path']) : ($prefix['path'] = $route['path'])) : '';
         isset($route['roles']) ? (isset($prefix['roles']) ? ($prefix['roles'] = [...$prefix['roles'], ...$route['roles']]) : ($prefix['roles'] = [...$route['roles']])) : '';
@@ -39,20 +42,23 @@ class RouteCompile {
         }
     }
 
-    public function compile_group($group, $prefix = []) {
+    public function compile_group($group, $prefix = [])
+    {
         foreach ($group as $key => $value) {
             $value["method"] = $key;
             $this->compile($value, $prefix);
         }
     }
 
-    public function compile_child(array $routes, $prefix) {
+    public function compile_child(array $routes, $prefix)
+    {
         foreach ($routes as $value) {
             $this->compile($value, $prefix);
         }
     }
 
-    public function crud_compile($curd, $prefix) {
+    public function crud_compile($curd, $prefix)
+    {
         if (in_array("a", $curd["crud"])) {
             $this->addroute(["handler" => [$curd["class"], "all"], ...$prefix], "GET");
         }
@@ -89,7 +95,8 @@ class RouteCompile {
         }
     }
 
-    public function addroute($route, $method) {
+    public function addroute($route, $method)
+    {
         if (!isset($this->route[$method])) {
             $this->route[$method] = [];
         }
@@ -99,7 +106,8 @@ class RouteCompile {
         $this->route[$method] = [...$this->route[$method], $route];
     }
 
-    public function addroutes($y) {
+    public function addroutes($y)
+    {
         foreach ($y as $value) {
             $value['method'] ? $method = $value['method'] : $method = "GET";
             unset($value['method']);

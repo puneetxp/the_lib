@@ -1,6 +1,7 @@
 <?php
 
-function defaultsetup($data = ['id', 'created_at', 'updated_at']) {
+function defaultsetup($data = ['id', 'created_at', 'updated_at'])
+{
     $table = [];
     if (in_array('id', $data)) {
         $table[] = ['name' => 'id', 'mysql_data' => 'int', 'datatype' => 'number', 'fillable' => "false", 'sql_attribute' => 'UNSIGNED PRIMARY KEY AUTO_INCREMENT'];
@@ -14,7 +15,8 @@ function defaultsetup($data = ['id', 'created_at', 'updated_at']) {
     return $table;
 }
 
-function scanfullfolder($dir) {
+function scanfullfolder($dir)
+{
     $x = [];
     $d = scandir($dir);
     for ($i = 2; $i < count($d); $i++) {
@@ -27,11 +29,12 @@ function scanfullfolder($dir) {
     return $x;
 }
 
-function default_att($item) {
+function default_att($item)
+{
     $default_sql_attribute = " NOT NULL";
     if (isset($item['sql_attribute'])) {
         if (str_contains($item['sql_attribute'], 'NULL')) {
-            
+
         } else {
             $item['sql_attribute'] = $item['sql_attribute'] . $default_sql_attribute;
         }
@@ -44,7 +47,8 @@ function default_att($item) {
 $route_default = '/api/';
 $output_path = '../php/App/';
 
-function table_set($item, $x) {
+function table_set($item, $x)
+{
     isset($item['default']) ? $table = defaultsetup($item['default']) : $table = defaultsetup();
     isset($item['enable']) ?
                     $table[] = ['name' => 'enable', 'mysql_data' => 'TINYINT(1)', 'datatype' => 'number', 'sql_attribute' => 'DEFAULT ' . $item['enable'] . ' NOT NULL '] : '';
@@ -70,19 +74,23 @@ function table_set($item, $x) {
     return ['name' => $item['name'], 'table' => $item['table'], 'data' => $table, 'relations' => $relationfor, 'crud' => $item['crud']];
 }
 
-function php_wrapper($data) {
+function php_wrapper($data)
+{
     return '<?php ' . $data . '?> ';
 }
 
-function php_w($data) {
+function php_w($data)
+{
     return '<?php ' . $data;
 }
 
-function class_wrapper($name, $data) {
+function class_wrapper($name, $data)
+{
     return ' class ' . $name . ' {' . $data . '} ';
 }
 
-function unique_multidim_array($array, $key) {
+function unique_multidim_array($array, $key)
+{
     $temp_array = array();
     $i = 0;
     $key_array = array();
@@ -97,7 +105,8 @@ function unique_multidim_array($array, $key) {
     return $temp_array;
 }
 
-function fopen_dir($link) {
+function fopen_dir($link)
+{
     $filename = $link;
     $dirname = dirname($filename);
     if (!is_dir($dirname)) {
@@ -106,6 +115,7 @@ function fopen_dir($link) {
     return fopen($filename, 'w');
 }
 
-function createfile($dir, $string) {
+function createfile($dir, $string)
+{
     fwrite(fopen_dir($dir), $string);
 }

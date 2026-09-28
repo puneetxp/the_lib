@@ -7,20 +7,21 @@ namespace The;
  *
  * @author puneetxp
  */
-class FileAct {
-
+class FileAct
+{
     protected string $public;
 
     public function __construct(
-            protected $file,
-            protected string $dir,
+        protected $file,
+        protected string $dir,
     ) {
 
     }
 
     public $files = [];
 
-    public function public(string $public, string $pre = '/storage') {
+    public function public(string $public, string $pre = '/storage')
+    {
         $this->public = $pre . $public;
         if ($public == "") {
             $this->dir .= '/public';
@@ -32,25 +33,28 @@ class FileAct {
         return $this;
     }
 
-    public function checkdir() {
+    public function checkdir()
+    {
         if (!is_dir($this->dir)) {
             mkdir(directory: $this->dir, recursive: true);
         }
     }
 
-    public static function init($file, $prefix = "../storage") {
+    public static function init($file, $prefix = "../storage")
+    {
         return new self(file: $file, dir: $prefix);
     }
 
-    public function webpImage($source, $quality = 100, $removeOld = false) {
+    public function webpImage($source, $quality = 100, $removeOld = false)
+    {
         $dir = pathinfo($source, PATHINFO_DIRNAME);
         $name = pathinfo($source, PATHINFO_FILENAME);
         $destination = $dir . DIRECTORY_SEPARATOR . $name . '.webp';
         $info = getimagesize($source);
         $isAlpha = false;
-        if ($info['mime'] == 'image/jpeg')
+        if ($info['mime'] == 'image/jpeg') {
             $image = imagecreatefromjpeg($source);
-        elseif ($isAlpha = $info['mime'] == 'image/gif') {
+        } elseif ($isAlpha = $info['mime'] == 'image/gif') {
             $image = imagecreatefromgif($source);
         } elseif ($isAlpha = $info['mime'] == 'image/png') {
             $image = imagecreatefrompng($source);
@@ -63,12 +67,14 @@ class FileAct {
             imagesavealpha($image, true);
         }
         imagewebp($image, $destination, $quality);
-        if ($removeOld)
+        if ($removeOld) {
             unlink($source);
+        }
         return $destination;
     }
 
-    public function up($name = '') {
+    public function up($name = '')
+    {
         $this->checkdir();
         if ($name == '') {
             $target_file = $this->dir . DIRECTORY_SEPARATOR . basename($_FILES[$this->file]["name"]);
@@ -81,7 +87,8 @@ class FileAct {
         return $this;
     }
 
-    public function fileupload($file, $name) {
+    public function fileupload($file, $name)
+    {
         $x = "Can't Upload";
         $this->checkdir();
         if ($name == '') {
@@ -95,7 +102,8 @@ class FileAct {
         return $x;
     }
 
-    public function ups() {
+    public function ups()
+    {
         $this->checkdir();
         foreach ($this->reArrayFiles($this->file) as $file) {
             // $this->files[] = ['name' => $file['name'], 'dir' => $this->dir . "/" . $file["name"], 'public' => $this->public . "/" . $file["name"]];
@@ -106,7 +114,8 @@ class FileAct {
         return $this;
     }
 
-    public function reArrayFiles(&$file_post) {
+    public function reArrayFiles(&$file_post)
+    {
         $file_ary = array();
         $file_count = count($file_post['name']);
         $file_keys = array_keys($file_post);
@@ -118,11 +127,13 @@ class FileAct {
         return $file_ary;
     }
 
-    public static function delete($path) {
+    public static function delete($path)
+    {
         unlink($path);
     }
 
-    public static function fopen_dir($link) {
+    public static function fopen_dir($link)
+    {
         $filename = $link;
         $dirname = dirname($filename);
         if (!is_dir($dirname)) {
@@ -131,7 +142,8 @@ class FileAct {
         return fopen($filename, 'w');
     }
 
-    public static function createfile($dir, $string) {
+    public static function createfile($dir, $string)
+    {
         fwrite(self::fopen_dir($dir), $string);
     }
 }

@@ -2,8 +2,8 @@
 
 namespace The;
 
-abstract class Model {
-
+abstract class Model
+{
     //items
     protected $items = [];
     protected $singular = false;
@@ -18,16 +18,19 @@ abstract class Model {
     protected $relation = [];
     protected $fillable = [];
     //__construct
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = new DB($this->table);
     }
 
-    public function set_singular() {
+    public function set_singular()
+    {
         $this->singular = true;
         return $this;
     }
 
-    public function paginate(int $pageNumber = 1, int $pageItems = 25) {
+    public function paginate(int $pageNumber = 1, int $pageItems = 25)
+    {
         $pageNumber = $_GET['page'] ?? $pageNumber;
         $pageItems = $_GET['pageItems'] ?? $pageItems;
         $this->page['result'] = $this->count();
@@ -47,7 +50,8 @@ abstract class Model {
         }
     }
 
-    protected function pages(int $number = 5) {
+    protected function pages(int $number = 5)
+    {
         $pages = [];
         $int = intdiv($number, 2);
         if ($this->page['totalpages'] <= $number) {
@@ -76,7 +80,8 @@ abstract class Model {
 
     //GET_data
     //mulitple
-    public static function all() {
+    public static function all()
+    {
         $x = (new static());
         $x->db->SelSet();
         $x->get();
@@ -84,41 +89,49 @@ abstract class Model {
     }
 
     //where *
-    public static function where($where) {
+    public static function where($where)
+    {
         return (new static())->_where($where);
     }
 
-    public function andwhere($data) {
+    public function andwhere($data)
+    {
         $this->db->WhereQ($data);
         return $this;
     }
 
-    public function orwhere($data) {
+    public function orwhere($data)
+    {
         $this->db->WhereQ($data, "OR");
         return $this;
     }
 
-    public function andWhereC($data) {
+    public function andWhereC($data)
+    {
         $this->db->WhereCustomQ($data);
         return $this;
     }
 
-    public function orWhereC($data) {
+    public function orWhereC($data)
+    {
         $this->db->WhereCustomQ($data, "OR");
         return $this;
     }
 
-    public static function wherec($where) {
+    public static function wherec($where)
+    {
         return (new static())->_wherec($where);
     }
 
-    public function get() {
+    public function get()
+    {
         $this->db->SelSet()->exe();
         $this->items = (array) $this->db->many();
         return $this;
     }
 
-    public function getnull() {
+    public function getnull()
+    {
         $this->db->SelSet()->exe();
         $this->items = (array) $this->db->many();
         if (count($this->items)) {
@@ -127,12 +140,14 @@ abstract class Model {
         return null;
     }
 
-    public function count() {
+    public function count()
+    {
         $this->db->CountSet()->exe();
         return (array) $this->db->many();
     }
 
-    public function first($select = ["*"]) {
+    public function first($select = ["*"])
+    {
         $this->items = (array) $this->db->SelSet($select)->exe()->first();
         if (count($this->items) > 0) {
             $this->singular = true;
@@ -141,97 +156,114 @@ abstract class Model {
         return null;
     }
 
-    public function _wherec($where = []) {
+    public function _wherec($where = [])
+    {
         $this->db->SelSet()->WhereCustomQ($where);
         return $this;
     }
 
-    public function _where($where = []) {
+    public function _where($where = [])
+    {
         $this->db->where(Req::get($this->model, $where));
         return $this;
     }
 
     //single
-    public static function find($value, $key = 'id') {
+    public static function find($value, $key = 'id')
+    {
         $x = (new static());
         $x->db->find($value, $key);
         return $x->first();
     }
 
-    public function getInserted() {
+    public function getInserted()
+    {
         $this->db->lastInserted();
         $this->items = (array) $this->db->first();
         $this->singular = true;
         return $this;
     }
 
-    public function getsInserted() {
+    public function getsInserted()
+    {
         $this->db->getInserted()->exe();
         $this->items = (array) $this->db->many();
         return $this;
     }
 
-    public static function create($data = []) {
+    public static function create($data = [])
+    {
         $x = (new static());
         $x->db->create(Req::get($x->model, $data));
         return $x;
     }
 
     //insert
-    public static function insert($data) {
+    public static function insert($data)
+    {
         $x = (new static());
         $x->db->insert($data);
         return $x;
     }
 
     //update
-    public static function upsert($data) {
+    public static function upsert($data)
+    {
         return (new static())->_upsert($data);
     }
 
-    public function update($data) {
+    public function update($data)
+    {
         $this->db->update(Req::get($this->model, $data));
         return $this;
     }
 
-    public function _upsert($data) {
+    public function _upsert($data)
+    {
         $this->db->upsert(Req::array($this->model, $data));
         return $this;
     }
 
-    public function toggle($where, $filed = "enable") {
+    public function toggle($where, $filed = "enable")
+    {
         $x = (new static());
         $x->db->UpSet()->WhereQ($where)->rawsql("SET `$filed` = NOT `$filed`")->exe();
         return $x;
     }
 
     //delete
-    public static function delete($where) {
+    public static function delete($where)
+    {
         return (new static())->db->where($where)->delete()->exe();
     }
 
-    public function del() {
+    public function del()
+    {
         $this->db->delete();
         return $this;
     }
 
-    public function clean($data) {
-        return array_map(fn($item) => array_filter($item, fn($key) => in_array($key, $this->fillable)), $data);
+    public function clean($data)
+    {
+        return array_map(fn ($item) => array_filter($item, fn ($key) => in_array($key, $this->fillable)), $data);
     }
 
     //default output
-    public function __toString() {
+    public function __toString()
+    {
         return Response::json($this->items);
     }
 
     //array output
-    public function array() {
+    public function array()
+    {
         return $this->items;
     }
 
     //call realtionship
     //Better for spa and fastest way
-    public function with($data, bool $first = true) {
+    public function with($data, bool $first = true)
+    {
         if (count($this->items) || $this->singular) {
             $x = [];
             if (is_array($data)) {
@@ -252,13 +284,14 @@ abstract class Model {
                 $this->relation[$data]["class"] = $this->relation($data);
                 $x[$data] = $this->isnull($this->relation[$data]["class"]);
             }
-            $this->singular ? ($x[$this->name] = [$this->items] ) : ($x[$this->name] = $this->items);
+            $this->singular ? ($x[$this->name] = [$this->items]) : ($x[$this->name] = $this->items);
             $this->items = $x;
         }
         return $this;
     }
 
-    public function join($joins, $where = []) {
+    public function join($joins, $where = [])
+    {
         $joinSpecs = [];
         foreach ($joins as $key => $val) {
             $relationName = is_int($key) ? $val : $key;
@@ -281,7 +314,7 @@ abstract class Model {
         $query = DB\sqlBuilder::buildJoinQuery(
             $this->table,
             $this->table,
-            [], 
+            [],
             $joinSpecs,
             $where
         );
@@ -292,18 +325,21 @@ abstract class Model {
         return $this;
     }
 
-    public static function joins($joins, $where = []) {
+    public static function joins($joins, $where = [])
+    {
         return (new static())->join($joins, $where);
     }
 
-    public function isnull($x) {
+    public function isnull($x)
+    {
         if ($x == null) {
             return [];
         }
         return $x?->array();
     }
 
-    public function relation($data) {
+    public function relation($data)
+    {
         $where = [];
         $x = ($this->singular ?
                 [$this->items[$this->relations[$data]['name']]] :
@@ -311,15 +347,16 @@ abstract class Model {
         if (count($x) > 0) {
             $where[$this->relations[$data]['key']] = $x;
             return call_user_func_array(
-                            [$this->relations[$data]['callback'], 'where'],
-                            [$where]
-                    )->get();
+                [$this->relations[$data]['callback'], 'where'],
+                [$where]
+            )->get();
         }
         return null;
     }
 
     //bindintosomepattern
-    public function sort() {
+    public function sort()
+    {
         if (count($this->with)) {
             $this->items = ($this->sortout($this->with, $this->items[$this->name]));
         }
@@ -327,7 +364,8 @@ abstract class Model {
         return $this;
     }
 
-    protected function sortout($relations, $data, $base = null) {
+    protected function sortout($relations, $data, $base = null)
+    {
         foreach ($relations as $relation) {
             $data = is_array($relation) ?
                     $this->filter_relations($relation, $data, $base ?? $this->items) :
@@ -336,24 +374,27 @@ abstract class Model {
         return $data;
     }
 
-    public function filter_relation(string $relation, array $data, $base) {
+    public function filter_relation(string $relation, array $data, $base)
+    {
         return array_values(array_map(function ($item) use ($relation, $base) {
-                    $y = array_values(
-                            array_filter(($base[$relation] ?? $this->items[$relation]) ?? [],
-                                    fn($model_item) =>
-                                    $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
-                            )
-                    );
-                    // if $y have sort key $this->relations['callback'] class having fillable having 'sort'
-                    if (count($y) > 0 && in_array('sort', (new $this->relations[$relation]['callback']())->fillable)) {
-                        usort($y, fn($a, $b) => $a['sort'] - $b['sort']);
-                    }
-                    $item[$relation] = in_array($relation, $this->one ?? []) ? ($y[0] ?? "" ) : $y;
-                    return $item;
-                }, $data));
+            $y = array_values(
+                array_filter(
+                    ($base[$relation] ?? $this->items[$relation]) ?? [],
+                    fn ($model_item) =>
+                            $model_item[$this->relations[$relation]['key']] == $item[$this->relations[$relation]['name']]
+                )
+            );
+            // if $y have sort key $this->relations['callback'] class having fillable having 'sort'
+            if (count($y) > 0 && in_array('sort', (new $this->relations[$relation]['callback']())->fillable)) {
+                usort($y, fn ($a, $b) => $a['sort'] - $b['sort']);
+            }
+            $item[$relation] = in_array($relation, $this->one ?? []) ? ($y[0] ?? "") : $y;
+            return $item;
+        }, $data));
     }
 
-    public function filter_relations(array $relation, array $data, array $base) {
+    public function filter_relations(array $relation, array $data, array $base)
+    {
         foreach ($relation as $key => $item) {
             if (is_string($key)) {
                 $data = $this->filter_relation($key, $data, $base);

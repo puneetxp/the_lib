@@ -2,7 +2,7 @@
 
 namespace The\DB;
 
-class grammer {
-
+class grammer
+{
     public $placeholder;
 }

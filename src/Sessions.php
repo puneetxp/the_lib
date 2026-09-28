@@ -6,14 +6,17 @@ use App\Model\{
     Active_role
 };
 
-class Sessions {
-    public static function createSessoion(){
+class Sessions
+{
+    public static function createSessoion()
+    {
         $sessionId = session_id();
         header("X-Session-Id: $sessionId");
         header("Access-Control-Expose-Headers: X-Session-Id"); // Allows frontend to read session_id
         header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Session-Id");
     }
-    public static function create($auth) {
+    public static function create($auth)
+    {
         $_SESSION['user_id'] = $auth['id'];
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_destroy();
@@ -42,7 +45,8 @@ class Sessions {
         return Response::json(array_intersect_key($auth, array_flip(["name", "email", "id", "roles"])));
     }
 
-    public static function roles() {
+    public static function roles()
+    {
         $roles = [];
         $x = Active_role::where(["user_id" => [$_SESSION['user_id']]])->getnull()?->with(['role']);
         if ($_SESSION['user_id'] == 1) {
@@ -54,15 +58,18 @@ class Sessions {
         return $roles;
     }
 
-    public static function get_current_user() {
+    public static function get_current_user()
+    {
         return (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id'])) ? $_SESSION['user_id'] : null;
     }
 
-    public static function update($id) {
+    public static function update($id)
+    {
 
     }
 
-    public static function delete($id) {
+    public static function delete($id)
+    {
 
     }
 }

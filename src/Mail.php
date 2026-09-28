@@ -63,7 +63,7 @@ class Mail
         }
 
         if (count($this->to)) {
-            $emailString ='';
+            $emailString = '';
             foreach ($this->to as $name => $email) {
                 $emailString .= "$name <$email>, ";
             }

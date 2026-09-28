@@ -4,19 +4,21 @@ namespace The;
 
 use GdImage;
 
-class Img {
-
+class Img
+{
     public GdImage $im;
     public bool $isAlpha = false;
 
-    public static function pathfile($source) {
+    public static function pathfile($source)
+    {
         $dir = pathinfo($source, PATHINFO_DIRNAME);
         $name = pathinfo($source, PATHINFO_FILENAME);
         $ext = pathinfo($source, PATHINFO_EXTENSION);
         return [$dir, $name, $ext];
     }
 
-    public static function webpImage($source, ?string $destination = null, $isaspect = true, $quality = 100, $removeOld = false, ?int $x = null, ?int $y = null) {
+    public static function webpImage($source, ?string $destination = null, $isaspect = true, $quality = 100, $removeOld = false, ?int $x = null, ?int $y = null)
+    {
         $dir = pathinfo($destination, PATHINFO_DIRNAME);
         $name = pathinfo($destination, PATHINFO_FILENAME);
         if (!is_dir($dir)) {
@@ -62,19 +64,22 @@ class Img {
         return $destination;
     }
 
-    public function __construct(public $source, public ?string $destination = null) {
+    public function __construct(public $source, public ?string $destination = null)
+    {
         if ($this->destination) {
             $this->destination = $this->source;
         }
     }
 
-    public function resoultion(?int $x = null, ?int $y = null) {
+    public function resoultion(?int $x = null, ?int $y = null)
+    {
         // dd($this->im);
         imageresolution($this->im, $x, $y);
         return $this;
     }
 
-    public function webpImg($quality = 100, $removeOld = false) {
+    public function webpImg($quality = 100, $removeOld = false)
+    {
         imagewebp($this->im, $this->destination, $quality);
         if ($removeOld) {
             unlink($this->$this->source);
@@ -82,7 +87,8 @@ class Img {
         return $this;
     }
 
-    public function create() {
+    public function create()
+    {
         $info = getimagesize($this->source);
         if ($info['mime'] == "image/gif" || $info['mime'] == "image/png") {
             $this->isAlpha = true;
@@ -93,22 +99,22 @@ class Img {
             case "image/avif":
                 $this->im = imagecreatefromavif($this->source);
                 break;
-            // jpg
+                // jpg
             case "image/gif":
                 $this->im = imageCreateFromGif($this->source);
                 break;
-            // jpg
+                // jpg
             case "image/jpeg":
                 $this->im = imagecreatefromjpeg($this->source);
                 break;
             case "image/jpg":
                 $this->im = imagecreatefromjpeg($this->source);
                 break;
-            // png
+                // png
             case "image/png":
                 $this->im = imageCreatefrompng($this->source);
                 break;
-            // bmp
+                // bmp
             case "image/bmp":
                 $this->im = imageCreateFromBmp($this->source);
                 break;
