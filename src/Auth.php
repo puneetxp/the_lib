@@ -40,8 +40,8 @@ class Auth
         if (empty($user['email']) || empty($user['password'])) {
             return Response::unprocessable("Email and password are required");
         }
-        if (strlen($user['password']) > Password::MAX_BYTES) {
-            return Response::unprocessable(['password' => 'Password must be at most ' . Password::MAX_BYTES . ' bytes']);
+        if ($error = Password::newPasswordError($user['password'])) {
+            return Response::unprocessable(['password' => $error]);
         }
         $user['password'] = Password::hash($user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {

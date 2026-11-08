@@ -38,7 +38,8 @@ Every adapter of the framework (Deno, PHP, ...) builds the same SQL for the same
 
 **Passwords:** bcrypt, cost 10. A hash made by any adapter logs in through the others.
 - Old unsalted SHA3-256 hashes (the_deno base64, the_lib hex) still log in, and are replaced by bcrypt at that login.
-- Passwords over 72 bytes are refused at register, because bcrypt reads only the first 72 bytes.
+- Any length works: bcrypt reads only 72 bytes, so a password over 72 bytes is first reduced to base64(SHA3-256(password)), 44 characters. Every byte counts (a long Hindi passphrase is fine), and the stored hash is still a plain bcrypt string.
+- A new password must have 6 to 128 characters (Unicode characters, not bytes). The messages, "Password must be at least 6 characters" and "Password is too long", say nothing about how passwords are stored.
 
 **CORS:** a switch, off by default.
 
