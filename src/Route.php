@@ -21,6 +21,7 @@ class Route
         private $routes,
         private $_url = "REQUEST_URI"
     ) {
+        Cors::apply(); // before anything else: a preflight is answered here
         ob_start();
         session_start([
             'cookie_secure' => secure,
