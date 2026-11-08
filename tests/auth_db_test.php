@@ -84,16 +84,25 @@ namespace {
     try {
         User::create(['name' => 'Root', 'email' => 'root@x.in', 'password' => Password::hash('r00t')]);
 
-        [$s, $b] = call([Auth::class, 'register'], ['name' => 'Alice', 'email' => 'alice@x.in', 'password' => 'pa55']);
+        [$s, $b] = call([Auth::class, 'register'], ['name' => 'Alice', 'email' => 'alice@x.in', 'password' => 'pa55word']);
         check('register', [$s, $b['email'] ?? null], [200, 'alice@x.in']);
         $stored = User::find('alice@x.in', 'email')->array()['password'];
         check('register stores bcrypt cost 10', substr($stored, 0, 7), '$2y$10$');
-        [$s] = call([Auth::class, 'register'], ['email' => 'long@x.in', 'password' => str_repeat('x', 73)]);
-        check('register refuses over 72 bytes', $s, 422);
-        [$s] = call([Auth::class, 'register'], ['email' => 'alice@x.in', 'password' => 'x']);
+        $hindi = 'मेरा पासवर्ड बहुत लंबा और सुरक्षित है'; // 99 bytes: over bcrypt's 72
+        [$s] = call([Auth::class, 'register'], ['email' => 'hindi@x.in', 'password' => $hindi]);
+        check('register a long Hindi password', $s, 200);
+        [$s] = call([Auth::class, 'login'], ['email' => 'hindi@x.in', 'password' => $hindi]);
+        check('and log in with it', $s, 200);
+        [$s] = call([Auth::class, 'login'], ['email' => 'hindi@x.in', 'password' => substr($hindi, 0, 72)]);
+        check('its first 72 bytes are not enough', $s, 401);
+        [$s, $b] = call([Auth::class, 'register'], ['email' => 'long@x.in', 'password' => str_repeat('x', 129)]);
+        check('register refuses over 128 characters, saying nothing about hashing', [$s, $b], [422, ['password' => 'Password is too long']]);
+        [$s, $b] = call([Auth::class, 'register'], ['email' => 'short@x.in', 'password' => '12345']);
+        check('register refuses under 6 characters', [$s, $b], [422, ['password' => 'Password must be at least 6 characters']]);
+        [$s] = call([Auth::class, 'register'], ['email' => 'alice@x.in', 'password' => 'another-pw']);
         check('email taken', $s, 422);
 
-        [$s, $b] = call([Auth::class, 'login'], ['email' => 'alice@x.in', 'password' => 'pa55']);
+        [$s, $b] = call([Auth::class, 'login'], ['email' => 'alice@x.in', 'password' => 'pa55word']);
         check('login', [$s, $b['email'] ?? null], [200, 'alice@x.in']);
         [$s, $b] = call([Auth::class, 'login'], ['email' => 'alice@x.in', 'password' => 'wrong']);
         check('wrong password is 401 (it was 404 User Not Found)', [$s, $b], [401, 'Password is Incorrect']);

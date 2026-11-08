@@ -19,19 +19,34 @@ function check(string $name, $got, $want): void
         echo "FAIL $name\n     got:  " . json_encode($got) . "\n     want: " . json_encode($want) . "\n";
     }
 }
+$chars = fn (string $s) => preg_match_all('/./us', $s);
 
 foreach ($spec['verify'] as $c) {
     check("verify: {$c['name']}", Password::verify($spec['password'], $c['stored']), [$c['ok'], $c['rehash']]);
 }
-$h = Password::hash($spec['password']);
-check('hash is bcrypt cost 10', substr($h, 0, 7), '$2y$10$');
-check('a new hash verifies, no re-hash', Password::verify($spec['password'], $h), [true, false]);
-check('two hashes of one password differ (salted)', $h !== Password::hash($spec['password']), true);
+foreach ($spec['bcrypt_input'] as $c) {
+    check("bcrypt input: {$c['name']}", [strlen($c['password']), $chars($c['password']), Password::bcryptInput($c['password'])], [$c['bytes'], $c['chars'], $c['input']]);
+}
+foreach ($spec['verify_long'] as $c) {
+    check("long: {$c['name']}", Password::verify($c['password'], $c['stored'])[0], $c['ok']);
+}
+foreach ($spec['new_password']['cases'] as $c) {
+    check('new password: ' . $chars($c['password']) . ' chars -> ' . json_encode($c['error']), Password::newPasswordError($c['password']), $c['error']);
+}
+foreach ([$spec['password'], $spec['bcrypt_input'][4]['password']] as $pw) {
+    $h = Password::hash($pw);
+    check('new hash is bcrypt cost 10', substr($h, 0, 7), '$2y$10$');
+    check('a new hash verifies, no re-hash', Password::verify($pw, $h), [true, false]);
+    check('two hashes of one password differ (salted)', $h !== Password::hash($pw), true);
+}
 try {
-    Password::hash($spec['too_long']);
-    check('over 72 bytes is refused', 'accepted', 'refused');
+    Password::hash(str_repeat('a', 129));
+    check('over 128 characters is refused', 'accepted', 'refused');
 } catch (InvalidArgumentException $e) {
-    check('over 72 bytes is refused', str_contains($e->getMessage(), '72 bytes'), true);
+    check('over 128 characters is refused', $e->getMessage(), $spec['new_password']['too_long']);
+}
+foreach ([$spec['new_password']['too_long'], $spec['new_password']['too_short']] as $m) {
+    check("message says nothing about hashing: $m", (bool) preg_match('/72|byte|bcrypt|sha|hash/i', $m), false);
 }
 
 foreach ($spec['cors'] as $c) {
