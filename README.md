@@ -31,3 +31,21 @@ Every adapter of the framework (Deno, PHP, ...) builds the same SQL for the same
 **Tests:**
 - `php tests/spec_test.php` replays the spec and needs no database.
 - `DBTEST=1 ... php tests/db_test.php` runs the models against a real MySQL or PostgreSQL server. See the file header for the exact command.
+
+## Passwords and CORS (the same in every adapter)
+
+`spec/auth_cases.json` holds the cases for both. The file is the same in the_deno, the_lib and the_go, and each adapter's tests read it.
+
+**Passwords:** bcrypt, cost 10. A hash made by any adapter logs in through the others.
+- Old unsalted SHA3-256 hashes (the_deno base64, the_lib hex) still log in, and are replaced by bcrypt at that login.
+- Passwords over 72 bytes are refused at register, because bcrypt reads only the first 72 bytes.
+
+**CORS:** a switch, off by default.
+
+| Setting | Effect |
+| --- | --- |
+| `CORS` unset or `off` | no other site may call the API with cookies; same-origin setups need nothing |
+| `CORS=on` | other sites may: any origin, for development |
+| `CORS=on` with `CORS_ORIGINS=https://a.com,https://b.com` | only those origins, for production |
+
+In PHP these settings are the constants `cors` and `cors_origins` (in env.php), or the environment variables. `The\Password` and `The\Cors` implement them. Tests: `php tests/auth_spec_test.php`, plus `DBTEST=1 ... php tests/auth_db_test.php`.

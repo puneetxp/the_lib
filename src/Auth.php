@@ -16,21 +16,34 @@ class Auth
     public static function login()
     {
         $user = Req::only(['email', 'password']);
-        $auth = User::find($user['email'], 'email')?->array();
-        if ($auth != null) {
-            $pass = hash('sha3-256', $user['password']);
-            if ($auth['password'] == $pass) {
-                return Sessions::create($auth);
-            }
-            Response::why("Password Not Correct");
+        $auth = User::find($user['email'] ?? '', 'email')?->array();
+        if ($auth == null) {
+            return Response::not_found("User Not Found");
         }
-        return Response::not_found("User Not Found");
+        if (isset($auth['enable']) && (int) $auth['enable'] === 0) {
+            return Response::not_authorised("This account has been disabled");
+        }
+        [$ok, $rehash] = Password::verify((string) ($user['password'] ?? ''), $auth['password'] ?? null);
+        if (!$ok) {
+            return Response::NotLogin("Password is Incorrect");
+        }
+        if ($rehash) {
+            // An old SHA3 hash: store bcrypt now that the password is known.
+            User::where(['id' => [$auth['id']]])->update(['password' => Password::hash($user['password'])]);
+        }
+        return Sessions::create($auth);
     }
 
     public static function register()
     {
         $user = Req::only(['name', 'email', 'password']);
-        $user['password'] = hash('sha3-256', $user['password']);
+        if (empty($user['email']) || empty($user['password'])) {
+            return Response::unprocessable("Email and password are required");
+        }
+        if (strlen($user['password']) > Password::MAX_BYTES) {
+            return Response::unprocessable(['password' => 'Password must be at most ' . Password::MAX_BYTES . ' bytes']);
+        }
+        $user['password'] = Password::hash($user['password']);
         if (User::find($user['email'], 'email')?->array() == null) {
             $auth = User::create($user)->getInserted()->array();
             if (is_array($auth)) {
