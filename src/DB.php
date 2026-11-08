@@ -481,6 +481,8 @@ class DB
 
     public function WhereQ($where, $type = "AND")
     {
+        // Column-name order, as in every adapter: the SQL never depends on key order.
+        ksort($where, SORT_STRING);
         foreach ($where as $key => $value) {
             $this->where[$type][] = [$key, "IN", $value];
         }
