@@ -33,7 +33,10 @@ abstract class Model
     {
         $pageNumber = $_GET['page'] ?? $pageNumber;
         $pageItems = $_GET['pageItems'] ?? $pageItems;
+        // count() runs a query, which clears the chain; keep it for the page query.
+        $chain = $this->db->state();
         $this->page['result'] = $this->count();
+        $this->db->restore($chain);
         if ($this->page['result']) {
             $this->page['pageNumber'] = $pageNumber;
             $this->page['pageItems'] = $pageItems;
@@ -88,10 +91,172 @@ abstract class Model
         return $x;
     }
 
-    //where *
-    public static function where($where)
+    // ---- the chain ------------------------------------------------------
+    // where, whereHas, whereNotHas, orderBy and limit work both as the start
+    // of a query (User::where([...])) and chained (->where([...])). PHP runs
+    // a static method even when called on an instance, so they are protected
+    // and reached through __callStatic / __call.
+
+    private const CHAIN = ['where', 'whereHas', 'whereNotHas', 'orderBy', 'limit'];
+
+    public static function __callStatic($method, $args)
     {
-        return (new static())->_where($where);
+        if (!in_array($method, self::CHAIN, true)) {
+            throw new \BadMethodCallException(static::class . "::$method() does not exist");
+        }
+        return (new static())->$method(...$args);
+    }
+
+    public function __call($method, $args)
+    {
+        if (!in_array($method, self::CHAIN, true)) {
+            throw new \BadMethodCallException(static::class . "->$method() does not exist");
+        }
+        return $this->$method(...$args);
+    }
+
+    /**
+     * Add conditions; calls chain with AND: where(['a' => 1])->where(['b' => [2, 3]]).
+     * Columns that are not on the model are ignored. The chain is cleared after
+     * every query; pass $reset = true to drop conditions added before.
+     */
+    protected function where($where, bool $reset = false)
+    {
+        $reset && $this->db->resetdata();
+        $this->db->where(Req::get((array) $this->model, (array) $where));
+        return $this;
+    }
+
+    /**
+     * Keep rows that have at least one related row, by relation name. $where is
+     * an array of conditions or a function that builds on the related model:
+     *   Book_stock::whereHas('book', ['public_listing' => 1])
+     *   Book::whereHas('book_stock', fn ($s) => $s->where(['publish' => 1])->whereHas('product', ['enable' => 1]))
+     */
+    protected function whereHas(string $relation, array|callable|null $where = null, string $type = 'AND')
+    {
+        return $this->relationExists($relation, $where, $type, 'EXISTS');
+    }
+
+    /** Keep rows with no related row matching $where (see whereHas). */
+    protected function whereNotHas(string $relation, array|callable|null $where = null, string $type = 'AND')
+    {
+        return $this->relationExists($relation, $where, $type, 'NOT EXISTS');
+    }
+
+    protected function orderBy(string $column, string $direction = 'ASC')
+    {
+        $this->db->OrderQ($column, $direction);
+        return $this;
+    }
+
+    protected function limit(int $count, int $offset = 0)
+    {
+        if ($count < 0 || $offset < 0) {
+            throw new \InvalidArgumentException("limit needs whole numbers >= 0, got $count, $offset");
+        }
+        $this->db->LimitQ($count)->OffsetQ($offset);
+        return $this;
+    }
+
+    /** The SQL and params the chain would run, without running it. */
+    public function toSQL(): array
+    {
+        return $this->db->toSQL();
+    }
+
+    // The name this model's table goes by in the SQL being built: an alias
+    // when it is the inner side of a whereHas.
+    protected ?string $sqlName = null;
+    // How deep this model sits in nested whereHas calls (0 = the query itself).
+    protected int $hasDepth = 0;
+
+    private function relationExists(string $relation, array|callable|null $where, string $type, string $op)
+    {
+        $rel = $this->relations[$relation] ?? null;
+        if (!$rel) {
+            throw new \InvalidArgumentException("{$this->name}: no relation \"$relation\" (has: " . implode(', ', array_keys($this->relations)) . ")");
+        }
+        $related = new $rel['callback']();
+        // Aliased <table>__<depth> so relations to the same table and nested
+        // calls refer to the right row; the alias depends only on the chain.
+        $related->hasDepth = $this->hasDepth + 1;
+        $alias = $rel['table'] . '__' . $related->hasDepth;
+        $related->sqlName = $alias;
+        if (is_callable($where)) {
+            $where($related);
+        } elseif ($where) {
+            $related->where($where);
+        }
+        $inner = $related->db->whereSQL();
+        $related->db->resetdata();
+        $q = [DB::class, 'ident'];
+        $this->db->WhereRawQ(
+            "$op (SELECT 1 FROM {$rel['table']} AS {$q($alias)} WHERE {$q($alias)}.{$q($rel['key'])} = "
+                . $q($this->sqlName ?? $this->table) . ".{$q($rel['name'])}"
+                . ($inner['sql'] !== '' ? " AND ({$inner['sql']})" : '') . ')',
+            $inner['params'],
+            $type
+        );
+        return $this;
+    }
+
+    /**
+     * Load rows with their related rows in one query: a LEFT JOIN per relation,
+     * generated from the relations map, using the chain built so far. Related
+     * columns are nested as $row[$relation].
+     */
+    public function withJoin(array $relations)
+    {
+        $rows = DB::raw(...array_values($this->withJoinSQL($relations)))->many();
+        $this->items = array_map(function ($row) use ($relations) {
+            $base = [];
+            $nested = [];
+            foreach ($row as $key => $value) {
+                $p = strpos($key, '__');
+                $rel = $p === false ? null : substr($key, 0, $p);
+                if ($rel !== null && in_array($rel, $relations, true)) {
+                    $nested[$rel][substr($key, $p + 2)] = $value;
+                } else {
+                    $base[$key] = $value;
+                }
+            }
+            return $base + $nested;
+        }, $rows);
+        return $this;
+    }
+
+    /** The SQL withJoin($relations) would run for the chain so far. */
+    public function withJoinSQL(array $relations): array
+    {
+        $q = [DB::class, 'ident'];
+        $base = $this->table;
+        $select = $this->selectList($base, (array) $this->model);
+        $joins = '';
+        foreach ($relations as $relName) {
+            $rel = $this->relations[$relName] ?? null;
+            if (!$rel) {
+                throw new \InvalidArgumentException("{$this->name}: no relation \"$relName\" (has: " . implode(', ', array_keys($this->relations)) . ")");
+            }
+            $alias = "r_$relName";
+            array_push($select, ...$this->selectList($alias, (array) ((new $rel['callback']())->model ?? []), $relName));
+            $joins .= " LEFT JOIN {$rel['table']} {$q($alias)} ON {$q($base)}.{$q($rel['name'])} = {$q($alias)}.{$q($rel['key'])}";
+        }
+        $where = $this->db->whereSQL($base);
+        $sql = "SELECT " . implode(', ', $select) . " FROM {$this->table} {$q($base)}$joins"
+            . ($where['sql'] !== '' ? " WHERE {$where['sql']}" : '')
+            . $this->db->orderSQL($base) . $this->db->limitSQL();
+        $this->db->resetdata();
+        return ['sql' => $sql, 'params' => $where['params']];
+    }
+
+    private function selectList(string $alias, array $cols, ?string $prefix = null): array
+    {
+        $q = [DB::class, 'ident'];
+        if (!$cols) {
+            return [$q($alias) . '.*'];
+        }
+        return array_map(fn ($c) => $q($alias) . '.' . $q($c) . ' AS ' . $q($prefix ? "{$prefix}__$c" : $c), $cols);
     }
 
     public function andwhere($data)
@@ -227,7 +392,11 @@ abstract class Model
     public function toggle($where, $filed = "enable")
     {
         $x = (new static());
-        $x->db->UpSet()->WhereQ($where)->rawsql("SET `$filed` = NOT `$filed`")->exe();
+        // UpSet() already wrote "UPDATE <table> SET "; this was "SET SET ...".
+        // CASE instead of NOT: flag columns are 0/1 integers, and PostgreSQL's
+        // NOT only takes booleans. Same result as MySQL's NOT on 0/1.
+        $f = DB::ident($filed);
+        $x->db->UpSet()->WhereQ($where)->rawsql("$f = CASE WHEN $f = 0 THEN 1 ELSE 0 END")->exe();
         return $x;
     }
 
@@ -346,10 +515,7 @@ abstract class Model
                 array_column($this->items, $this->relations[$data]['name']));
         if (count($x) > 0) {
             $where[$this->relations[$data]['key']] = $x;
-            return call_user_func_array(
-                [$this->relations[$data]['callback'], 'where'],
-                [$where]
-            )->get();
+            return (new $this->relations[$data]['callback']())->where($where)->get();
         }
         return null;
     }
